@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <style type='text/css'>
+    body {
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+.box {
+  font: 10px sans-serif;
+}
+
+.box line,
+.box rect,
+.box circle {
+  fill: #fff;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+.box circle {
+  fill: lightsteelblue;
+}
+.box.whisker {
+  stroke-width: 2px;
+}
+.box.lightwhisker {
+  stroke: silver;
+}
+
+.box.median {
+  stroke-width: 2px;
+}
+.box.vert_outer {
+ stroke-dasharray: 4,2;
+}
+.box.vert_inner {
+  
+}
+.axis path,
+.axis line {
+    fill: none;
+    stroke: black;
+    shape-rendering: crispEdges;
+    stroke-width: 1px;
+}
+
+.box .outlier {
+  fill: none;
+  stroke: #ccc;
+}
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+.title {
+    font: 12px sans-serif;
+    font-weight: bold;
+}
+text.shadow {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-opacity: .8;
+}
+
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var margin = {top: 10, right: 50, bottom: 50, left: 50},
+    width = 200 - margin.left - margin.right,
+    height = 250 - margin.top - margin.bottom,
+    padding = 0,
+    rangepad = .1,
+    mid = 40,
+    boxwidth = 20,
+    radius = 3,
+    showaxis = false;  // axis or labels
+
+(function () {
+    "use strict";
+    
+    // scale
+	var yscale = d3.scale.linear()
+		.domain([stats.min - (stats.max * rangepad), stats.max + (stats.max *  rangepad)])
+		.range([height - padding, padding])
+    ;
+    
+    var svg = d3.select(".report")
+      .selectAll("svg")
+      .data([stats])
+    .enter().append("svg")
+      .attr("class", "box")
+      .attr("width", width + margin.left + margin.right)
+      .attr("height", height + margin.bottom + margin.top)
+    .append("g")
+      .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+    ;
+
+    var vert = svg.append("svg:line")
+        .attr("x1", mid)
+        .attr("y1", yscale(stats.max))
+        .attr("x2", mid)
+        .attr("y2", yscale(stats.min))
+        .attr("class", "box vert_outer")
+    ;
+
+    var vert_inner = svg.append("svg:line")
+        .attr("x1", mid)
+        .attr("y1", yscale(stats.ud))
+        .attr("x2", mid)
+        .attr("y2", yscale(stats.ld))
+        .attr("class", "box vert_inner")
+    ;
+
+    var whisk_top = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/2)
+        .attr("y1", yscale(stats.max))
+        .attr("x2", mid + boxwidth/2)
+        .attr("y2", yscale(stats.max))
+        .attr("class", "box whisker")
+    ;
+    
+     var whisk_bottom = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/2)
+        .attr("y1", yscale(stats.min))
+        .attr("x2", mid + boxwidth/2)
+        .attr("y2", yscale(stats.min))
+        .attr("class", "box whisker")
+    ;
+    
+    /*
+     var whisk_91 = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/4)
+        .attr("y1", yscale(stats.pct91))
+        .attr("x2", mid)
+        .attr("y2", yscale(stats.pct91))
+        .attr("class", "box lightwhisker")
+    ;
+     var whisk_9 = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/4)
+        .attr("y1", yscale(stats.pct9))
+        .attr("x2", mid)
+        .attr("y2", yscale(stats.pct9))
+        .attr("class", "box lightwhisker")
+    ;*/
+    
+     var whisk_98 = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/4)
+        .attr("y1", yscale(stats.pct98))
+        .attr("x2", mid + boxwidth/4)
+        .attr("y2", yscale(stats.pct98))
+        .attr("class", "box lightwhisker")
+    ;
+     var whisk_2 = svg.append("svg:line")
+        .attr("x1", mid - boxwidth/4)
+        .attr("y1", yscale(stats.pct2))
+        .attr("x2", mid + boxwidth/4)
+        .attr("y2", yscale(stats.pct2))
+        .attr("class", "box lightwhisker")
+    ;
+
+ 
+    //# svg:rect x="0" y="0" width="0" height="0" rx="0" ry="0"
+    var rect = svg.append("svg:rect")
+        .attr("x", boxwidth )
+        .attr("y", yscale(stats.uq))
+        .attr("width", boxwidth*2)
+        .attr("height", -(yscale(stats.uq) - yscale(stats.lq)))
+        .attr("class", "box rect")
+    ;
+     
+     var median = svg.append("svg:circle")
+        .attr("r", radius)
+        .attr("cx", mid)
+        .attr("cy", yscale(stats.mean))
+        .attr("class", "box circle")
+    ;
+        
+    var med = svg.append("svg:line")
+        .attr("x1", mid - boxwidth)
+        .attr("y1", yscale(stats.median))
+        .attr("x2", mid + boxwidth)
+        .attr("y2", yscale(stats.median))
+        .attr("class", "box median")
+    ;
+    
+    svg.append("svg:text")
+        .attr("x", mid)
+        .attr("y", height + margin.bottom/2)
+        .attr("text-anchor", "middle")
+        .attr("class", "text title")
+        .text(stats.name)
+    ;
+    
+    //Y axis
+    if (showaxis) {
+        var yAxis = d3.svg.axis()
+                      .scale(yscale)
+                      .orient("left")
+                      .ticks(10);
+        
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(yAxis);
+    } else {
+        svg.append("svg:text")
+            .attr("x", mid - boxwidth - 10)
+            .attr("y", yscale(stats.max))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.max)
+        ;
+         svg.append("svg:text")
+            .attr("x", mid - boxwidth - 10)
+            .attr("y", yscale(stats.min))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.min)
+        ;
+        svg.append("svg:text")
+            .attr("x", mid - boxwidth - 10)
+            .attr("y", yscale(stats.median))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.median)
+        ;
+        svg.append("svg:text")
+            .attr("x", mid + boxwidth + 10)
+            .attr("y", yscale(stats.uq))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .attr("class", "text")
+            .text(stats.uq)
+        ;
+        svg.append("svg:text")
+            .attr("x", mid + boxwidth + 10)
+            .attr("y", yscale(stats.lq))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .attr("class", "text")
+            .text(stats.lq)
+        ;
+    }
+    
+    console.log("y start = " + yscale(stats.uq));
+    console.log("y end = " + yscale(stats.lq));
+    console.log("y maxend = " + yscale(maxend));
+    console.log("y minend = " + yscale(minend));
+    
+})();
+
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <div class="report"></div>
+
+<script type="text/javascript">
+   
+    //	pct91	pct98
+    // 	59.0	69.0
+    var stats = {
+        name: "age",
+        min: 17.0,
+        max: 90.0,
+        lq: 31.0,
+        uq: 49.0,
+        ld: 24.0,
+        ud: 58.0,
+        pct2: 19.0,
+        pct9: 23.0,
+        pct91: 59.0,
+        pct98: 69.0,
+        mean: 35,
+        median: 40.0
+    }; 
+    
+</script>
+  
+</body>
+
+
+</html>
+

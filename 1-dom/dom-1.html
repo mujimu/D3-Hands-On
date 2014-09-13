@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+           p {
+               font-size: 10px;
+           }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var p = d3.select('body')
+            .append('p')
+            .text('first text here')      // html() or text() allowable
+            .style('color', 'steelblue')
+            .style('font-weight', 'bold')
+    ;  // chained call result is selection created by append
+
+    console.log('fin.');
+
+    /*
+        try in console:
+
+        ... review selection (result of append in chained calls)
+        p                  // d3 selection result is array of arrays
+        p[0][0]            // underlying DOM el of first occurrence
+        p.node()           // shortcut to underlying DOM el of first occurrence
+
+        ... raw js calls on DOM el
+        p.node().getAttribute('style');    // provided style
+        p.node().innerHTML;                // html w/in p
+
+        ... change css style on selection
+        p.style('font-size', '20px');
+        p.style('font-weight', 100);
+        p.style('font-weight', 900);
+        p.style('opacity', 0.5);
+
+        ... append another p
+        d3.select('body').append('p').text('second text');     // only master css applied
+        ... new p is not a part of original selection
+        p.style('color', 'red');    // does not affect new p
+
+     */
+</script>
+</html>

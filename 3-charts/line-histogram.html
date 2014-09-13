@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        svg {
+            shape-rendering: crispEdges;
+        }
+        #stackedbudget-chart line {
+            stroke: #000;
+        }
+        .rule line {
+            stroke: #eee;
+        }
+
+        table {
+            border-collapse: collapse;
+            border: 2px solid #FFFAFA;
+        }
+        td {
+            padding: 10px;
+        }
+
+        text {
+            font: 12px sans-serif;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+d3.csv("data/misery.csv", function(data) {
+    var samp_size = 0, yyyymm = "";
+    var val_array = new Array(),
+            label_array = new Array(),
+            employ_array = new Array(),
+            misery_array = new Array();
+    //var  val_hash = new Array();
+    var max_employ = 0, max_misery = 0;
+
+    /* Read CSV file: first row =>  month,unemployment,inflation,misery,president  */
+    sampsize = data.length;
+
+
+    for (var i=0; i < sampsize; i++) {
+        yyyymm = data[i].month;
+        label_array[i] = yyyymm;
+        employ_array[i] =  parseFloat(data[i].unemployment);
+        misery_array[i] =  parseFloat(data[i].misery);
+        val_array[i] =  {month:yyyymm, employ:parseFloat(data[i].unemployment) , misery:parseFloat(data[i].misery), pres:data[i].president } ;
+        //val_hash[yyyymm] =  {employ:parseFloat(data[i].unemployment) , misery:parseFloat(data[i].misery), pres:data[i].president } ;
+
+        max_employ = Math.max( max_employ , parseFloat(data[i].unemployment) );
+        max_misery = Math.max( max_misery , parseFloat(data[i].misery) );
+        //document.write('<p>' + label_array[i] +  ': ' + employ_array[i] + '</p>');
+        //document.write('<p>' + i + '</p>');
+    }
+
+    max_employ = Math.floor(max_employ) + 1;
+    //document.write('<p>Max unemployment: ' + max_employ +  '  ,  Max misery: ' + max_misery + '</p>');
+
+
+    var  w = 900,
+            h = 700, h1 = 450, h2 = 175,
+            p = 50,
+            x = d3.scale.linear().domain([ 0, sampsize - 1 ]).range([0, w - p]),
+            x2 = d3.scale.linear().domain([ 0, sampsize - 1 ]).range([0, w - p]),
+            y = d3.scale.linear().domain([0, max_employ]).range([h1, 0]);
+    y2 = d3.scale.linear().domain([0, max_misery]).range([0, h2]);
+
+
+
+    // ---------------------------------------------------------
+    // Prepare graph region
+    // ---------------------------------------------------------
+    var vis = d3.select("body")
+            .data([val_array])
+            .append("svg:svg")
+            .attr("width", w + 10)
+            .attr("height", h + 10)
+            .append("svg:g")
+            .attr("transform", "translate(" + p + "," + 0 + ")");
+
+
+    var rules = vis.selectAll("g.rule")
+            .data(x.ticks(15))
+            .enter().append("svg:g")
+            .attr("class", "rule");
+
+
+    var rotation_angle = Math.floor( (w - p) / 14 );
+
+
+    // ---------------------------------------------------------
+    // Grid lines and labels
+    // ---------------------------------------------------------
+    // vertical grid lines
+    rules.append("svg:line")
+            .attr("x1", x)
+            .attr("x2", x)
+            .attr("y1", 0)
+            .attr("y2", h1);
+
+    // horizontal grid lines
+    rules.append("svg:line")
+            .attr("class", function(d) { return d ? null : "axis"; })
+            .data(y.ticks(10))
+            .attr("y1", y)
+            .attr("y2", y)
+            .attr("x1", 0)
+            .attr("x2", w);
+
+    // horizontal axis labels
+    /*
+     for (var i=1; i < 13; i++) {
+     //if (i % 13 == 0 ) {
+     rules.append("svg:text")
+     .attr("x", x2(i*50))
+     .attr("y", h- 210)
+     .attr("dy", ".71em")
+     .attr("text-anchor", "end")
+     .attr("transform", "rotate(-90 " + x2(i*50) + " " + (h-250) + ")" )
+     .text( label_array[i*50] );
+     //}
+     }
+     */
+
+
+    // Vertical axis labels
+    var vticks = y.ticks(12);
+    rules.append("svg:text")
+        //.data(y.ticks(12))
+            .data(vticks)
+        //.attr("y", y)
+            .attr("y", function(d,i) { return (vticks.length - i - 1) * (h1 + 36) / vticks.length ;} )
+            .attr("x", -10)
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .text(function(d,i) { if (vticks[i] < 11 && vticks[i] > 0) {return vticks[i];} else return '';} );
+    //.text(y.tickFormat(5));
+
+
+
+    // ---------------------------------------------------------
+    // Draw time series
+    // ---------------------------------------------------------
+    vis.append("svg:path")
+            .attr("class", "line")
+            .attr("fill", "none")
+            .attr("stroke", "steelblue")
+            .attr("d", d3.svg.line()
+                    .x(function(d,i) { return  x(i); })
+                    .y(function(d) { return y(d.employ); }));
+
+
+
+    // ---------------------------------------------------------
+    // Draw accompanying bar graph
+    // ---------------------------------------------------------
+    var bars = vis.selectAll("g.rule")
+            .data(val_array)
+            .enter().append("svg:g")
+            .attr("class", "rule");
+
+    // fake data: to make the bars appear, draw only every 6th bar
+    bars.append("svg:rect")
+            .attr("fill", "steelblue" )
+            .attr("x", function(d, i) { return x(i); })
+            .attr("y", function(d) { return h - y2(d.misery); }    )
+            .attr("width", 2)
+            .attr("height", function(d,i) { if (i % 6 == 0) {return y2(d.misery);} else {return 0;} });
+    //.attr("height", function(d,i) { return y2(d.misery); });
+
+
+
+
+
+
+    // ---------------------------------------------------------
+    // Highlight certain periods, BEFORE drawing grid lines
+    // ---------------------------------------------------------
+    // Reagan:  Observation 337 to 432
+    rules.append("svg:rect")
+            .attr("x", x(336))
+            .attr("y", 0)
+            .attr("width", x(432-337))
+            .attr("height", h1)
+            .attr("fill", "#FEF0DB");
+
+    // Reagan: Jul/Aug/Sep/Oct 1984
+    rules.append("svg:rect")
+            .attr("x", x(378))
+            .attr("y", 0)
+            .attr("width", x(4))
+            .attr("height", h1)
+            .attr("fill", "#A6D785");
+
+    vis.append("svg:text")
+            .attr("x", x(336) + 10)
+            .attr("y", h1 - 20)
+            .attr("text-anchor", "right")
+            .text("Reagan");
+
+
+    // Clinton:  Observation 481 to 576
+    rules.append("svg:rect")
+            .attr("x", x(480))
+            .attr("y", 0)
+            .attr("width", x(576-481))
+            .attr("height", h1)
+            .attr("fill", "#FEF0DB");
+
+    // Clinton: Jul/Aug/Sep/Oct 1996
+    rules.append("svg:rect")
+            .attr("x", x(522))
+            .attr("y", 0)
+            .attr("width", x(4))
+            .attr("height", h1)
+            .attr("fill", "#A6D785");
+
+    vis.append("svg:text")
+            .attr("x", x(480) + 10)
+            .attr("y", h1 - 20)
+            .attr("text-anchor", "right")
+            .text("Clinton");
+
+
+    // Obama:  Observation 673 to end
+    rules.append("svg:rect")
+            .attr("x", x(672))
+            .attr("y", 0)
+            .attr("width", x(sampsize - 1 - 673))
+            .attr("height", h1)
+            .attr("fill", "#FEF0DB");
+
+    vis.append("svg:text")
+            .attr("x", x(672) - 10)
+            .attr("y", h1 - 20)
+            .attr("text-anchor", "right")
+            .text("Obama");
+
+
+    // Bush I: Jul/Aug/Sep/Oct 1992
+    rules.append("svg:rect")
+            .attr("x", x(474))
+            .attr("y", 0)
+            .attr("width", x(4))
+            .attr("height", h1)
+            .attr("fill", "#A6D785");
+
+    // Bush II: Jul/Aug/Sep/Oct 2004
+    rules.append("svg:rect")
+            .attr("x", x(621))
+            .attr("y", 0)
+            .attr("width", x(4))
+            .attr("height", h1)
+            .attr("fill", "#A6D785");
+
+
+
+    // Title
+    vis.append("svg:text")
+            .attr("x", 30)
+            .attr("y", 25)
+            .attr("text-anchor", "right")
+            .text("U.S. National Unemployment Rate (1953 - present)");
+
+    // Legend : Presidential Terms
+    rules.append("svg:rect")
+            .attr("x", 30)
+            .attr("y", 60)
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", "#FEF0DB");
+
+    vis.append("svg:text")
+            .attr("x", 60)
+            .attr("y", 75)
+            .attr("text-anchor", "right")
+            .text("Presidential Term");
+
+
+    // Legend : Re-election period
+    rules.append("svg:rect")
+            .attr("x", 30)
+            .attr("y", 90)
+            .attr("width", 20)
+            .attr("height", 20)
+            .attr("fill", "#A6D785");
+
+    vis.append("svg:text")
+            .attr("x", 60)
+            .attr("y", 105)
+            .attr("text-anchor", "right")
+            .text("July to Oct. of Re-election Year");
+
+    // Title: Misery
+    vis.append("svg:text")
+            .attr("x", 30)
+            .attr("y", h1 + 100)
+            .attr("text-anchor", "right")
+            .text("U.S. Misery Index (1953 - present)");
+
+
+
+});
+
+
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>

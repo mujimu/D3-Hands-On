@@ -1,0 +1,477 @@
+<html>
+    <head>
+
+        <script src="http://d3js.org/d3.v3.min.js"></script>
+        <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+
+
+<script type='text/javascript' src="data/model.js"></script>    <!-- fake data -->
+
+
+<title>Node Graph</title>
+        <style>
+            path.link {
+                fill: none;
+                stroke: lightsteelblue;
+                stroke-width: 2px;
+                stroke-linecap: round;
+                marker-end: none; /*url(#end);*/
+            }
+            path.link.ld {
+                /*opacity: 0.5; */
+                stroke-dasharray: .5,4;
+                stroke: #DCDCDC;
+            }
+            path.link.lq {
+                /*opacity: 0.5;*/
+                /*stroke-dasharray: 2,4;*/
+            }
+            path.link.mean {
+                stroke: steelblue;
+                /*opacity: 0.75;*/
+                /*stroke-dasharray: 10,3;*/
+                /*stroke-width: 4px;*/
+            }
+            path.link.uq {
+                /*opacity: 1.0;  */
+                /*stroke-width: 4px;*/
+                /*stroke: #666;*/
+                stroke: steelblue;
+            }
+            path.link.full {
+                /*opacity: 0.3;*/
+                stroke-width: 4px;
+                stroke: steelblue;
+                marker-end: none;
+            }
+
+            circle {
+                fill: steelblue;
+                stroke: #000;
+                stroke-width: 2px;
+            }
+            circle.target {
+                fill: #DE1F1F;
+                stroke: #000;
+            }
+            circle.selected {
+                stroke: #000;
+                fill: white;
+            }
+            circle.targetselected {
+                fill: white;
+                stroke: #000;
+            }
+
+            text {
+                fill: #000;
+                font: 10px sans-serif;
+                pointer-events: none;
+            }
+            text.shadow {
+                stroke: #fff;
+                stroke-width: 3px;
+                stroke-opacity: .8;
+            }
+
+        </style>
+    </head>
+    
+    <body>
+        <div class="wrapper">
+            <div id="nodeRelationsModel"></div>
+        </div>
+
+
+        <script type='text/javascript'>
+
+        function log(str) {
+            console.log(str);
+        }
+
+        //from visualizations.js
+        function renderNodeRelationsViz(model_results, model_name){
+
+            var target = model_name;  // can inject into model_results
+            var modelId = model_results.name;
+            var node_data = model_results.assocRelations;
+
+            // set up lookups
+            var field_lookups = {};
+            console.log("raw field: " + JSON.stringify(model_results.fields));
+            for (var i = 0; i < model_results.fields.length; i++) {
+                var field = model_results.fields[i];
+                console.log("field = " + JSON.stringify(field));
+                field_lookups[field.headerName + ""] = field;
+            }
+            console.log("fields = " + JSON.stringify(field_lookups));
+
+            var width = 800,
+                    height = 400,
+                    r = 20,
+                    radius = 8,
+                    target_radius = 8,
+                    repulsion = -4040,
+                    gravity = .01, //0.1,
+                    distance = 180,
+                    minStrength = 0.30,
+                    showMarkers = false,
+                    lalign = false,
+                    doarc = false,
+                    target_center = true,
+                    onlyTarget = true,
+                    adj_distance = -0.8,
+                    debug = false;
+
+            var mode = "strong-tiny";
+            if (mode === "strong-tiny") {
+                radius =  8;
+                repulsion = -400;
+                gravity = 0.1;
+                distance= 120;
+                minStrength = 0.33;
+            } else if (mode === "weak-tiny") {
+                radius = 8;
+                repulsion = -400;
+                gravity = 0.3;
+                distance = 200;
+                minStrength = 0.0;
+                adj_distance = -.5;
+            }  else if (mode === "strong-teeny") {
+                radius = 5;
+                repulsion = -400;
+                gravity = 0.6;
+                distance = 200;
+                minStrength = 0.33;
+                onlyTarget=true;
+            }
+
+
+
+            var fieldTarget = function(name) {
+                // identify target
+                if (name === modelId)
+                    return target;
+                else return name;
+            };
+
+            var executeChart = function () {
+                var nodes = [];
+                var links = [];
+
+                // prep nodes
+                _.each(node_data, function(n) {
+                    // out vertex - add if not present else update
+                    var nname = fieldTarget(n.outVertex);
+                    var node = _.find(nodes, function(d) {
+                        return d.name === nname;
+                    });
+                    if (!node || node == undefined) {
+                        node = { name: nname, level: (nname === target? 0 : 1), radius: radius};
+                        nodes.push(node);
+                    }
+                    // in vertex - add if not present else update
+                    var nname = fieldTarget(n.inVertex);
+                    var node = _.find(nodes, function(d) {
+                        return d.name === nname;
+                    });
+                    if (!node || node == undefined) {
+                        node = { name: nname, level: (nname === target? 0 : 1), radius: radius};
+                        nodes.push(node);
+                    }
+                });
+                _.each(nodes, function(n) {
+                    n.x = width/2;
+                    n.y = height/2;
+                })
+
+                if (debug) {
+                    log("num nodes: " + JSON.stringify(nodes.length));
+                    log("nodes: " + JSON.stringify(nodes));
+                } else {
+                    log("nodes: " + _.map(nodes, function(n){ return n.name }));
+                }
+
+                // prep links
+                _.each(node_data, function (n) {
+                    var link = {source: -1, target: -1};
+
+                    // isolate node array pos of source/target
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (nodes[i].name === fieldTarget(n.outVertex)) {
+                            link.source = i;
+                        }
+                    }
+                    for (var i = 0; i < nodes.length; i++) {
+                        if (nodes[i].name === fieldTarget(n.inVertex)) {
+                            link.target = i;
+                        }
+                    }
+
+                    if (link.source > -1 && link.target > -1) {
+                        if ((onlyTarget && (fieldTarget(n.outVertex) == target || fieldTarget(n.inVertex) == target)) || (n.strength >= minStrength)) {
+                            link.value = +n.strength;
+                            link.fixed = true;
+                            link.type = 'uq';
+                            if (n.strength <= 0.10)
+                                link.type = 'ld';
+                            else if (n.strength < 1/3)
+                                link.type = 'lq';
+                            else if (n.strength < 2/3)
+                                link.type = 'mean';
+                            else if (n.strength >= 0.9)
+                                link.type = 'full';
+                            links.push(link);
+                        }
+                    }
+                });
+
+                if (debug) {
+                    d3.select("#nodeRelationsModel")
+                            .append("ul")
+                            .selectAll("li")
+                            .data(nodes)
+                            .enter()
+                            .append("li")
+                            .text(function (d) {
+                                return "node: " + JSON.stringify(d);
+                            });
+                    d3.select("#nodeRelationsModel")
+                            .append("ul")
+                            .selectAll("li")
+                            .data(links)
+                            .enter()
+                            .append("li")
+                            .text(function (d) {
+                                return "link: " + JSON.stringify(d);
+                            });
+                    return;
+                }
+
+                var force = d3.layout.force()
+                                .nodes(nodes)
+                                .links(links)
+                                .size([width, height])
+                                .linkDistance(function(d) {
+                                    // weak control over distance
+                                    if (adj_distance)
+                                        return distance + (distance * adj_distance * d.value);
+                                    else return distance;
+                                })
+                                .charge(repulsion)
+                                .gravity(gravity)
+                                .friction(0.1)
+                                .on("tick", tick)
+                                .start()
+                        ;
+
+                var svg = d3.select("#nodeRelationsModel").append("svg")
+                                .attr("width", width)
+                                .attr("height", height)
+                        ;
+
+                if (showMarkers) {
+                    // directional arrows
+                    svg.append("svg:defs").selectAll("marker")
+                            .data(["end"])
+                            .enter().append("svg:marker")
+                            .attr("id", String)
+                            .attr("viewBox", "0 -5 10 10")
+                            .attr("refX", 20)
+                            .attr("refY", 0)
+                        //.attr("markerUnits", "userSpaceOnUse")
+                            .attr("markerWidth", 3)
+                            .attr("markerHeight", 3)
+                            .attr("orient", "auto")
+                            .append("svg:path")
+                            .attr("d", "M0,-5 L10,0 L0,5 ");
+                }
+
+                // Links & arrows
+                var path = svg.append("svg:g")
+                                .selectAll("path")
+                                .data(force.links())
+                                .enter()
+                                .append("svg:path")
+                                .attr("class", function(d) {
+                                    return "link " + d.type;
+                                })
+                        ;
+                //console.log(force.nodes());
+
+                // Create then add the nodes
+                var node = svg.selectAll(".node")
+                                .data(force.nodes())
+                                .enter()
+                                .append("g")
+                                .attr("class", function(d) {
+                                    return "node " + (d.level === 0 ? "target" : "");
+                                })
+                                .attr("cx", function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
+                                .attr("cy", function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); })
+                                .call(force.drag)
+                        ;
+
+                node.append("circle")
+                        .attr("r", function(d) {
+                            return d.radius - 2;
+                        })
+                        .attr("class",function(d) {
+                            return "circle " + (d.level === 0 ? "target" : "");
+                        })
+                        .on("mouseover", function(){
+                            var n = d3.select(this);
+                            n.attr("class", "circle " + (n.datum().level === 0 ? "targetselected" : "selected"));
+                        })
+                        .on("mouseout", function(){
+                            var n = d3.select(this);
+                            n.attr("class", "circle " + (n.datum().level === 0 ? "target" : ""));
+                        })
+                        .on("dblclick", function() {
+                            var n = d3.select(this);
+                            var name = n.datum().name;
+                            console.log('isolate id of field: ' + name);
+                            if(field_lookups.hasOwnProperty(name)) {
+                                var field = field_lookups[name];
+                                $('#modalContainer .modal-body').remove();
+                                $('#modalContainer').append('<div class="modal-body"><i style="padding:40px;font-size:30px" class="fa fa-spinner fa-spin"></i></div>');
+                                $('#genericModal').modal('show');
+                                AppRes.comm.execute('show_varstats', field.id);
+                            } else {
+                                alert('No data available');
+                            }
+                        });
+
+                ;
+
+                // node text with thick white stroke for legibility
+                node.append("text")
+                        .attr("class", "shadow")
+                        .attr("y", +0)
+                        .attr("dx", function(d) {
+                            //return (d.index % 2 == 0 ? +15 : -15);
+                            //console.log(d.name + " = " + d.x);
+                            //return (d.x > width/2 ? +15 : -15);
+                            return (lalign? -15 : +15 );
+                        })
+                        .attr("dy", ".35em")
+                        .attr("text-anchor", function(d){
+                            //return (d.index % 2 == 0 ? "start" : "end");
+                            //return (d.x > width/2 ? "start" : "end");
+                            return (lalign? "end" : "start");
+                        })
+                        .text(function (d) { return d.name; })
+                ;
+
+                // node text
+                var text = node.append("text")
+                                .attr("y", +0)
+                                .attr("dx", function(d) {
+                                    //return (d.index % 2 == 0 ? +15 : -15);
+                                    //return (d.x > width/2 ? +15 : -15);
+                                    return (lalign? -15 : +15 );
+                                })
+                                .attr("dy", ".35em")
+                                .attr("text-anchor", function(d){
+                                    //return (d.index % 2 == 0 ? "start" : "end");
+                                    //return (d.x > width/2 ? "start" : "end");
+                                    return (lalign? "end" : "start");
+                                })
+                                .text(function (d) { return d.name; })
+                        ;
+
+                // placement
+                function tick(e) {
+
+                    //node.each(gravity_pull(.2 * e.alpha));
+                    node.each(collide(.75));
+                    /*
+                     var q = d3.geom.quadtree(node),
+                     i = 0,
+                     n = node.length;
+                     while (++i < n) {
+                     q.visit(collide(node[i]));
+                     }
+                     */
+
+                    // boundary box
+                    node.attr("cx", function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
+                            .attr("cy", function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); })
+                    ;
+
+                    node.attr("transform", function (d) {
+                        if (d.level == 0 && target_center) {
+                            d.x = width / 2;
+                            d.y = height / 2;
+                        };
+                        return "translate(" + d.x + "," + d.y + ")";
+                    });
+
+                    path.attr("d", function (d) {
+                        var dx = d.target.x - d.source.x,
+                                dy = d.target.y - d.source.y,
+                                dr = 0;
+                        if (doarc) {
+                            dr = Math.sqrt(dx * dx + dy * dy) * 2;
+                            // arc
+                            return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y + " ";
+                        } else {
+                            // line
+                            return "M" + d.source.x + "," + d.source.y + " " + d.target.x + "," + d.target.y + " ";
+                        }
+                    });
+                }
+
+                // Move nodes toward inner cluster
+                function gravity_pull(alpha) {
+                    return function(d) {
+                        d.y += (d.cy - d.y) * alpha;
+                        d.x += (d.cx - d.x) * alpha;
+                    };
+                }
+
+                // Prevent node collision
+                function collide(node) {
+                    var r = node.radius + 16,
+                            nx1 = node.x - r,
+                            nx2 = node.x + r,
+                            ny1 = node.y - r,
+                            ny2 = node.y + r;
+                    return function(quad, x1, y1, x2, y2) {
+                        if (quad.point && (quad.point !== node)) {
+                            var x = node.x - quad.point.x,
+                                    y = node.y - quad.point.y,
+                                    l = Math.sqrt(x * x + y * y),
+                                    r = node.radius + quad.point.radius;
+                            if (l < r) {
+                                l = (l - r) / l * .5;
+                                node.x -= x *= l;
+                                node.y -= y *= l;
+                                quad.point.x += x;
+                                quad.point.y += y;
+                            }
+                        }
+                        return x1 > nx2
+                                || x2 < nx1
+                                || y1 > ny2
+                                || y2 < ny1;
+                    };
+                }
+            };
+
+            executeChart();
+        }
+
+
+
+
+        function renderModelNode(model) {
+                renderNodeRelationsViz(model, "status");
+        };
+
+        renderModelNode(dummy_model);
+
+
+        </script>
+    </body>
+</html>

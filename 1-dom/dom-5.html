@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        ul.chart {
+            font-size: 8px;
+        }
+
+        li.chart-text {
+            font-size: 20px;
+            color: blue;
+            font-weight: 600;
+        }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var labels = {
+        "hey": 4,
+        "ho": 10,
+        "let's": 3,
+        "go": 12
+    };
+
+    var data = d3.entries(labels);
+    console.log(JSON.stringify(data));
+
+    var sz = data.length;
+    var colorpicker = function(d,i) {
+        return colorbrewer.PuRd[sz+1][sz-i];
+    };
+
+    var ul = d3.select('body')
+            .append('ul')
+            .attr('class', 'chart')
+    ;
+
+    var li = ul.selectAll('li')
+            .data(data)
+            .enter()
+            .append('li')
+                .attr('class', 'chart-text')
+                .text(function(d) { return d.key + " : " + d.value; } )
+                .style('color', colorpicker)
+    ;
+
+    console.log('fin');
+
+    /*
+        // use native Array functions or Underscore/Lodash for
+        // filtering, map / reduce, forEach
+        data.filter(function(d) {
+            return d.key.charAt(0) === 'h';
+        });
+        data.map(function(d) {
+            return { key: d.key, percent: d.value/100 };
+        });
+        data.forEach(function(d) {
+            d.percent = d.value/100;
+        }); data;
+
+        ... array functions
+        d3.keys(labels);     // if array, key is index
+        d3.values(labels);   // values
+        d3.entries(labels);  // convert into key/value object array
+        JSON.stringify(d3.entries(labels));
+
+        ... map/set functions
+        var lmap = d3.map(labels);    // convert into map by key
+        lmap.values();    // raw values back
+        lmap.keys();      // keys of map
+        lmap.entries();   // entries
+        lmap.has('no');
+        lmap.has('ho');
+        lmap.get('ho');
+        lmap.set('ho',8);
+        lmap.get('ho');
+
+        ... array math
+        var vals = d3.values(labels).sort(d3.ascending);
+        d3.max(vals);
+        d3.min(vals);
+        d3.extent(vals);
+        d3.mean(vals);
+        d3.sum(vals);
+
+        [d3.quantile(vals, .25),         // quartile array
+            d3.quantile(vals, .5),
+            d3.quantile(vals, .75),
+            d3.quantile(vals, 1)] ;
+
+        d3.pairs(vals);                  // array of value pairs
+
+        ... nesting (aka group by)
+        // first layer grouping by even/odd
+        // second layer grouping by first letter of key
+        d3.nest()
+            .key(function(d) { return (d.value % 2 ? 'even': 'odd'); })
+            .key(function(d) { return d.key.charAt(0); })
+            .entries(data);
+    */
+</script>
+</html>

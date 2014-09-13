@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+    var data = [1,2,3]
+
+    var chart = d3.select('body')
+            .append('svg')
+            .attr({width: 800, height: 300})
+            .append('g');
+
+    var circles = chart
+                    .selectAll('circle')
+                    .data(data)
+                    .enter()
+                    .append('circle')
+                    .attr('cx', function(d,i) {
+                        return (i+1) * 100;   //0 based i
+                    })
+                    .attr('cy', 100)
+                    .attr('r', function(d) {
+                         return d*10;
+                    })
+                    .style({fill: 'steelblue', stroke:'black', 'stroke-width':5})
+                    .on('mouseover', function() {
+                          d3.select(this) //  get this el in d3 if needed
+                            .style('fill','gray' )
+                            .style('stroke', 'darkseagreen')
+                          ;
+
+                    })
+                    .on('mouseout', function() {
+                        d3.select(this) //  get this el in d3 if needed
+                                .style('fill','steelblue' )
+                                .style('stroke', 'black')
+                        ;
+
+                    })
+            ;
+
+
+
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>

@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+  <style type='text/css'>
+    .content {
+  font: 10px sans-serif;
+}
+.tooltip {
+  font: 10px sans-serif;
+}
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+text.tik {
+    fill: #333;
+    text-anchor: middle;
+}
+text.label {
+    fill: #666;
+    font: 12px sans-serif;
+    pointer-events: none;
+    text-anchor: end;
+    stroke: none;
+}
+text.label_selected {
+    fill: #000;
+    font-weight: bold;
+}
+text.value {
+    fill: #666;
+    font: 12px sans-serif;
+    text-anchor: start;
+    stroke: none;
+}
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var width = 300, //width
+    height = 200, //height
+    //r = Math.min(width, height) / 2.5, //radius
+    r = 100,
+    labelr = r + 10, // radius for label anchor
+    color = d3.scale.category20(),
+    widthMargin = 80, 
+    heightMargin = 30;
+
+//console.log(uniques);
+var ttl = 0;
+uniques.forEach(function(n){
+    ttl += n.count;
+});
+console.log("total count = " + ttl);
+
+var vis = d3.select(".content")
+    .append("svg:svg")
+    .data([uniques]) 
+    .attr("width", width + widthMargin) 
+    .attr("height", height + heightMargin)
+    .append("svg:g") 
+    .attr("transform", "translate(" + (r+ widthMargin) + "," + (r + heightMargin) + ")") 
+;
+
+//paths
+var arc = d3.svg.arc() 
+    .innerRadius(r * .00)
+    .outerRadius(r * .95)
+;
+ 
+var pie = d3.layout.pie() 
+    .value(function(d) { return d.count; })
+; 
+ 
+var arcs = vis.selectAll("g.slice") 
+    .data(pie) 
+    .enter() 
+    .append("svg:g")
+        .attr("class", "slice")
+; 
+ 
+arcs.append("svg:path")
+    .attr("fill", function(d, i) { return color(i); } ) 
+    .attr("d", arc)
+.on("mouseover", function(d) {
+    d3.select('.tooltip').html(d.data.value + " = " + d.value + "  occurances"); 
+})
+.on("mouseout", function(d) {
+    d3.select('.tooltip').html('');
+})
+; 
+ 
+/*
+arcs.append("svg:text") 
+    .attr("transform", function(d) { 
+        d.innerRadius = 0;
+        d.outerRadius = r;
+        return "translate(" + arc.centroid(d) + ")"; 
+    })
+    .attr("text-anchor", "middle") 
+    .text(function(d, i) { return uniques[i].value; }); 
+*/
+arcs.append("svg:text")
+    .attr("transform", function(d) {
+        var c = arc.centroid(d),
+            x = c[0],
+            y = c[1],
+            // pythagorean theorem for hypotenuse
+            h = Math.sqrt(x*x + y*y);
+        return "translate(" + (x/h * labelr) +  ',' +
+           (y/h * labelr) +  ")"; 
+    })
+    .attr("dy", ".35em")
+    .attr("text-anchor", function(d) {
+        // are we past the center?
+        return (d.endAngle + d.startAngle)/2 > Math.PI ?
+            "end" : "start";
+    })
+    .text(function(d, i) { 
+        // hide smaller angle text
+        if (d.endAngle - d.startAngle > .3) {
+        return uniques[i].value; 
+        } else return "";
+    });
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <div class="content"></div>
+<p>
+<div class="tooltip" style="float:left"></div>
+
+<script type="text/javascript">
+   
+var uniques = 
+[
+  {
+    "count":4442,
+    "value":"HS-grad"
+  },
+  {
+    "count":3349,
+    "value":"Some-college"
+  },
+  {
+    "count":3209,
+    "value":"Bachelors"
+  },
+  {
+    "count":1201,
+    "value":"Masters"
+  },
+  {
+    "count":686,
+    "value":"Assoc-voc"
+  },
+  {
+    "count":506,
+    "value":"Assoc-acdm"
+  },
+  {
+    "count":469,
+    "value":"Prof-school"
+  },
+  {
+    "count":420,
+    "value":"11th"
+  },
+  {
+    "count":341,
+    "value":"10th"
+  },
+  {
+    "count":337,
+    "value":"Doctorate"
+  },
+  {
+    "count":234,
+    "value":"7th-8th"
+  },
+  {
+    "count":179,
+    "value":"9th"
+  },
+  {
+    "count":140,
+    "value":"12th"
+  },
+  {
+    "count":99,
+    "value":"5th-6th"
+  },
+  {
+    "count":54,
+    "value":"1st-4th"
+  },
+  {
+    "count":16,
+    "value":"Preschool"
+  }
+];
+    
+    
+</script>
+    
+    
+  
+</body>
+
+
+</html>
+

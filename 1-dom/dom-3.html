@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        li {
+            font-size: 20px;
+            color: mediumseagreen;
+        }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var labels = ['hey', 'ho', 'let\'s', 'go'];
+
+    var li = d3.select('body')
+            .append('ul')
+            .selectAll('li')
+            .data(labels)
+            .enter()
+            .append('li')
+                .attr('id', function(d,i) { return 'data_' + i;})
+                .text(function(d) { return d; })
+                .style('font-weight',700)
+    ;
+
+    console.log('fin');
+
+    /*
+     try in console:
+
+     ... view selection
+     li                     // group of all 4 li created under ul
+
+     ... view underlying data
+     li[0][0]               // first node of first grouping
+     li[0][0].__data__      // underlying data assigned to node
+     li[0].datum()          // shortcut to node's data
+
+     ... js anonymous functions
+     var ff = function(i) { return i * 2; }
+     ff(11)                  // returns 22
+
+     ... style, attr and text can accept text or func
+     ... optional callback params = (data, index), but must return value to use
+     li.text("all the same");
+     li.text(function(d,i) { return "data = '" + d + "' in position " + i; });
+     var lambda = function(d) { return "joey says: " + d; };
+     li.text(lambda);
+
+     ... style can use data
+     li.style('color', function(d,i) {
+        return (i%2 === 0 ?  'mediumseagreen' : 'darkgreen');
+     });
+
+     ... transitions too
+     li.transition().duration(2000).style('opacity', function(d,i) {
+        return (i/4);
+     });
+
+     setInterval(function() {
+        li.transition().duration(2000).style('opacity', Math.random).style('color', 'darkgreen');
+     },3000);
+
+     try the main call again    in diff color
+     d3.select('body')
+         .append('ul')
+         .selectAll('li')
+         .data(labels)
+         .enter()
+         .append('li')
+         .attr('id', function(d,i) { return 'data_' + i;})
+         .text(function(d) { return d; })
+         .style('font-weight',700).style('color','red');
+
+     d3.selectAll('li')
+     d3.selectAll('ul').selectAll('li')
+*/
+</script>
+</html>

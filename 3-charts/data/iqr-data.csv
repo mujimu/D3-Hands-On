@@ -1,0 +1,16 @@
+label,q1,q2,q3,range
+Dedicated Short Bias,-3.88166667,-0.86,2.9975,6.87916667
+Managed Futures,-2.38416667,0.37,3.686667,6.07083367
+S&P 500,-2.17018333,1.0885,3.232025,5.40220833
+Long/Short Equity,-1.33583333,0.585,2.404167,3.74000033
+Emerging Markets,-0.56666667,1.345,2.454167,3.02083367
+Event Driven - Multi Strategy,-0.405,0.965,2.085833,2.490833
+Convertible Arbitrage,-0.38333333,0.885,1.853333,2.23666633
+Event Driven,-0.34166667,0.91,1.89,2.23166667
+DJ/Credit Suisse Hedge Fund Index,-0.15083333,0.69,1.929167,2.08000033
+Event Driven - Distressed,-0.25166667,0.81,1.721667,1.97333367
+Multi-Strategy,-0.1975,0.74,1.7,1.8975
+Global Macro,-0.09083333,1.16,1.795833,1.88666633
+Fixed Income Arbitrage,0.01333333,0.74,1.504167,1.49083367
+Equity Market Neutral,-0.1975,0.51,1.1275,1.325
+Event Driven - Risk Arbitrage,-0.1,0.415,1.145833,1.245833

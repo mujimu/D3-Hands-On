@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+           p {
+               font-size: 20px;
+           }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var body = d3.select('body');
+
+    body.append('div')
+            .append('p')
+            .text('first text here')
+            .style('color', 'steelblue')
+            .style('font-weight', 'bold')
+    ;
+    body.append('div')
+            .append('p')
+            .text('second text here')
+            .style('color', 'darkblue')
+    ;
+
+    console.log('fin.');
+
+    /*
+        try in console:
+
+        ... view body in console
+        body
+        body.node().children
+
+        ... append another p outside a div
+        body.append('p').text('third text');   // only master css applied
+        ... append to first div
+        body.select('div').append('p').text('middle text');   // only master css applied
+
+        ... first div in body is first div overall
+        body.select('div').node() == d3.select('div').node()
+
+        ... review selections in console
+        d3.select('p')                  // array of arrays but only 1st occurrence
+        d3.select('p')[0]               // first grouping
+        d3.select('p')[0][0]            // first underlying DOM el
+        d3.select('p').node()           // shortcut to first underlying DOM el
+
+        d3.selectAll('p')               // array of arrays for flattened results
+        d3.selectAll('p')[0]            // first grouping (only 1 in flattened)
+        d3.select('p').node()           // shortcut first underlying DOM el
+
+        d3.selectAll('div p')           // css parent/child selector
+                                        // p in body (not div) is missing
+
+        ... nested selection by chaining
+        d3.selectAll('div').selectAll('p')   // grouped by parent div
+                                        // two groupings appear
+
+        ... bulk act uponon selections
+        var ps = d3.selectAll('p');
+        ps                              // all p's selected
+
+        ... change all styles (chainable)
+        ps.style('font-size', '15px');
+        ps.style('font-weight', 900).style('color', 'steelblue');
+
+        ... simple css transitions
+        ps.transition().delay(100).duration(2000).style('opacity',0.1);
+        ps.style('opacity',0.9);
+    */
+</script>
+</html>

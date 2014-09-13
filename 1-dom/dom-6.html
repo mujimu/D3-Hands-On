@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        ul.chart {
+            font-size: 8px;
+        }
+
+        li.chart-text {
+            font-size: 20px;
+            color: blue;
+            font-weight: 600;
+        }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var labels = {
+        "hey": 4,
+        "ho": 10,
+        "let's": 3,
+        "go": 12
+    };
+
+    var cinsert = 'green';
+    var cupdate = 'blue';
+    var cdelete = 'red';
+
+    var extractFromObject = function(data) {
+        return d3.entries(data);
+    }
+
+    var data = extractFromObject(labels);
+    console.log(JSON.stringify(data));
+
+    var sz = data.length;
+
+    var ul = d3.select('body')
+                    .append('ul')
+                    .attr('class', 'chart')
+            ;
+
+    var li = ul.selectAll('li')
+                    .data(data, function(d) {
+                        return d.key;
+                    })
+                    .enter()
+                    .append('li')
+                    .attr('class', 'chart-text')
+                    .text(function(d) { return d.key + " : " + d.value; } )
+                    .style('color', cinsert)
+            ;
+
+    setTimeout(function() {
+
+        // data change
+        labels.hey = labels.hey * 2;
+        delete labels.go;
+        delete labels.ho;
+        labels.carbona = 27;
+        labels["!glue"] = 22;
+        data = extractFromObject(labels);
+        console.log(JSON.stringify(data));
+
+        li = ul.selectAll('li')
+                .data(data, function(d) {
+                    return d.key;
+                })
+        ;
+        // update
+        li.style('color', cupdate)
+                .text(function(d) { return d.key + " : " + d.value; } )
+        ;
+        // enter
+        li.enter()
+                .append('li')
+                .attr('class', 'chart-text')
+                .text(function(d) { return d.key + " : " + d.value; } )
+                .style('color', cinsert)
+                .style('opacity', 0)
+                .transition()
+                .duration(5000)
+                .style('opacity',1)       //fade in
+        ;
+        // exit
+        li.exit()
+                .style('color', cdelete)
+                .text(function(d) { return d.key + " : <deleted>"; } )
+                .transition()
+                .duration(10000)
+                .style('opacity',.001)
+                .remove()
+        ;
+
+
+
+
+    },5000);
+
+
+    console.log('fin');
+
+    /*
+            ... adjust data  and do it again
+            ... remove exit nodes instead of fade out
+
+
+     */
+</script>
+</html>

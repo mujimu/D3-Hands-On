@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+  
+  <style type='text/css'>
+    rect.chart {
+  stroke: white;
+  stroke-width: 0;
+  fill: steelblue;
+}
+rect.chart:hover {
+  fill: lightsteelblue;
+}
+
+line {
+    stroke: #ccc;
+}
+line.vert {
+    opacity: 0.25;
+}
+line.first {
+    stroke: #000;
+    stroke-width: 2;
+}
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+text.tik {
+    fill: #333;
+    text-anchor: middle;
+}
+text.label {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+    text-anchor: end;
+    stroke: none;
+      shape-rendering: crispEdges;
+}
+text.label_selected {
+    fill: #000;
+    font-weight: bold;
+}
+text.value {
+    fill: #666;
+    font: 12px sans-serif;
+    text-anchor: start;
+    stroke: none;
+}
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var valueLabelWidth = 40; // space reserved for value labels (right)
+var barHeight = 20; // height of one bar
+var barLabelWidth = 100; // space reserved for bar labels
+var barLabelPadding = 20; // padding between bar and bar labels (left)
+var gridLabelHeight = 18; // space reserved for gridline labels
+var gridChartOffset = 3; // space between start of grid and first bar
+var maxBarWidth = 420; // width of the bar with the max value
+ 
+var barLabel = function(d) { return d['value']; };
+var barValue = function(d) { return parseFloat(d['count']); };
+ 
+// sort data
+var sortedData = uniques.sort(function(a, b) {
+ return d3.descending(barValue(a), barValue(b));
+}); 
+console.log(sortedData);
+
+// scales
+var y = d3.scale
+    .ordinal()
+    .domain(d3.range(0, sortedData.length))
+    .rangeBands([0, sortedData.length * barHeight])
+;
+
+var yText = function(d, i) { return y(i) + y.rangeBand() / 2; };
+
+var x = d3.scale
+    .linear()
+    .domain([0, d3.max(sortedData, barValue)*1.2])
+    .range([0, maxBarWidth])
+;
+
+// svg container
+var chart = d3.select("body")
+  .append("svg")
+  .attr('width', maxBarWidth + barLabelWidth + valueLabelWidth)
+  .attr('height', gridLabelHeight + gridChartOffset + sortedData.length * barHeight)
+;
+
+// grid line labels
+var gridContainer = chart
+    .append('g')
+    .attr('transform', 'translate(' + barLabelWidth + ',' + gridLabelHeight + ')'); 
+
+gridContainer.selectAll("text.tik")
+    .data(x.ticks(5))
+    .enter().append("text")
+      .attr("x", x)
+      .attr("dy", -3)
+      .attr("class", "tik")
+      .text(String);
+
+// vertical grid lines
+gridContainer.selectAll("line.vert")
+    .data(x.ticks(10))
+    .enter()
+    .append("line")
+      .attr("class", "vert")
+      .attr("x1", x)
+      .attr("x2", x)
+      .attr("y1", -gridChartOffset)
+      .attr("y2", y.rangeExtent()[1] + gridChartOffset)
+    ;
+
+// bar labels
+var labelsContainer = chart.append('g')
+    .attr('transform', 'translate(' + (barLabelWidth - barLabelPadding) + ',' + (gridLabelHeight + gridChartOffset) + ')')
+; 
+
+labelsContainer.selectAll('text.label')
+    .data(sortedData)
+    .enter()
+    .append('text')
+      .attr('y', yText)
+      .attr('class', 'label')
+      .attr("dy", ".35em")
+      .text(barLabel)
+        .on("mouseover", function(){
+            d3.select(this).attr("class", "text label_selected");
+        })
+        .on("mouseout", function(){
+            d3.select(this).attr("class", "text label");
+        })
+;
+
+// bars
+var barsContainer = chart.append('g')
+  .attr('transform', 'translate(' + barLabelWidth + ',' + (gridLabelHeight + gridChartOffset) + ')')
+;
+// start line
+
+barsContainer.append("line")
+  .attr("y1", -gridChartOffset)
+  .attr("y2", y.rangeExtent()[1] + gridChartOffset)
+  .attr("class", "vert")
+;
+
+barsContainer.selectAll("rect.chart")
+    .data(sortedData)
+    .enter()
+    .append("rect")
+.attr('y', function(d, i) { return i * barLabelPadding ;})
+      .attr('height', y.rangeBand() - 2)
+      .attr('width', function(d) { return x(barValue(d)); })
+      .attr('class', 'chart')
+;      
+
+// bar value labels
+barsContainer.selectAll("text.value")
+    .data(sortedData)
+    .enter()
+    .append("text")
+      .attr("class", "value")
+      .attr("x", function(d) { return x(barValue(d)); })
+      .attr("y", yText)
+      .attr("dx", 3) // padding-left
+      .attr("dy", ".35em") // vertical-align: middle
+      .text(function(d) { 
+          return d3.round(barValue(d)); 
+      })
+;
+
+
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <script type="text/javascript">
+   
+var uniques = 
+[
+  {
+    "count":4442,
+    "value":"HS-grad"
+  },
+  {
+    "count":3349,
+    "value":"Some-college"
+  },
+  {
+    "count":3209,
+    "value":"Bachelors"
+  },
+  {
+    "count":1201,
+    "value":"Masters"
+  },
+  {
+    "count":686,
+    "value":"Assoc-voc"
+  },
+  {
+    "count":506,
+    "value":"Assoc-acdm"
+  },
+  {
+    "count":469,
+    "value":"Prof-school"
+  },
+  {
+    "count":420,
+    "value":"11th"
+  },
+  {
+    "count":341,
+    "value":"10th"
+  },
+  {
+    "count":337,
+    "value":"Doctorate"
+  },
+  {
+    "count":234,
+    "value":"7th-8th"
+  },
+  {
+    "count":179,
+    "value":"9th"
+  },
+  {
+    "count":140,
+    "value":"12th"
+  },
+  {
+    "count":99,
+    "value":"5th-6th"
+  },
+  {
+    "count":54,
+    "value":"1st-4th"
+  },
+  {
+    "count":16,
+    "value":"Preschool"
+  }
+];
+    
+    
+</script>
+    
+    
+  
+</body>
+
+
+</html>
+

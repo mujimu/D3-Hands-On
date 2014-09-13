@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+
+  <style type='text/css'>
+    .content {
+  font: 10px sans-serif;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.axis text {
+    font-family: sans-serif;
+    font-size: 10px;
+}
+
+
+.line {
+  fill: none;
+  stroke: black;
+  stroke-width: 1.5px;
+}
+.line.spline {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 1.5px;
+}
+.line.mean {
+  stroke: skyblue;
+  stroke-width: 3px;
+}
+.line.quadrant {
+    stroke-width: 1px;
+    stroke: black;
+    stroke-dasharray: 1,4;
+    opacity: 0.5;
+}
+
+.area {
+    fill: lightsteelblue;
+    stroke-width: 0;
+}
+.area.quadrant {
+    fill: steelblue;
+}
+
+.area.decile {
+    fill: lightsteelblue;
+}
+
+
+.box {
+  font: 10px sans-serif;
+}
+
+.box.line,
+.box.rect,
+.box.circle {
+  fill: aliceblue;
+  stroke: gray;
+  stroke-width: 1.5px;
+}
+.box.mean {
+  fill: skyblue;
+}
+.box.whisker {
+  stroke-width: 2px;
+}
+.box.lightwhisker {
+  stroke: lightblue;
+}
+
+.box.median {
+  stroke-width: 2px;
+}
+.box.vert_outer {
+ stroke-dasharray: 4,2;
+}
+.box.vert_inner {
+  
+}
+.box .outlier {
+  fill: none;
+  stroke: #ccc;
+}
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+.title {
+    font: 12px sans-serif;
+    font-weight: bold;
+}
+
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var margin = {top: 20, right: 30, bottom: 30, left: 50},
+    width = 500 - margin.left - margin.right,
+    height = 200 - margin.top - margin.bottom;
+
+// get Y max
+var ymax =  _.max(_.pluck(plots, "y"));
+console.log("max y = " + ymax);
+
+// extract area between quadrants
+var quadrants = _.filter(plots, function(d) {
+    return stats.lq <= d.x && d.x <= stats.uq;
+});
+//console.log(JSON.stringify(quads));
+// extract area between deciles
+var deciles = _.filter(plots, function(d) {
+    return stats.ld <= d.x && d.x <= stats.ud;
+});
+
+var svg = d3.select('.content')
+  .append('svg')
+       .attr('width', width + margin.left + margin.right)
+       .attr('height', height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")")
+;
+
+var x = d3.scale.linear()
+    .range([0, width])
+    .domain([stats.min - (stats.max * .1), stats.max + (stats.max * .1)])
+;
+
+var y = d3.scale.linear()
+    .range([height, 0])
+    .domain([0,ymax * 1.3])  // room for box
+;
+
+var line = d3.svg.line()
+    .x(function(d) { return x(d.x); })
+    .y(function(d) { return y(d.y); })
+;
+
+var area = d3.svg.area()
+    .x(function(d) { return x(d.x); })
+    .y0(height)
+    .y1(function(d) { return y(d.y); })
+;
+
+svg.append("path")
+        .datum(deciles)
+        .attr("class", "area decile")
+        .attr("d", area);
+
+svg.append("path")
+        .datum(quadrants)
+        .attr("class", "area quadrant")
+        .attr("d", area);
+
+svg.append("path")
+      .datum(plots)
+      .attr("class", "line spline")
+      .attr("d", line)
+;
+
+
+
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+;
+
+svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+    .append("text")
+      .attr("x", width / 2 )
+      .attr("y", 30)
+      .attr("dy", ".71em")
+      .style("text-anchor", "middle")
+      .text(stats.name)
+;
+
+/*
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+     .ticks(5)
+;
+
+svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+;
+*/
+svg.append("text")
+      .attr("transform", "rotate(-90)")
+      //.attr("y", -30)
+      .attr("x", -(height/2))
+      .attr("dy", ".71em")
+      .style("text-anchor", "middle")
+      .text("Population Density")
+;
+
+var mean_band = svg.append("svg:line")
+    .attr("x1", x(stats.mean))
+    .attr("y1", y(1))
+    .attr("x2", x(stats.mean))
+    .attr("y2", y(ymax))
+    .attr("class", "line quadrant")
+;
+
+var mean = svg.append("svg:line")
+    .attr("x1", x(stats.mean))
+    .attr("y1", y(0))
+    .attr("x2", x(stats.mean))
+    .attr("y2", y(ymax))
+    .attr("class", "line mean")
+    //.style("stroke", "rgb(6,120,155)")
+;
+
+var lq = svg.append("svg:line")
+    .attr("x1", x(stats.lq))
+    .attr("y1", y(1))
+    .attr("x2", x(stats.lq))
+    .attr("y2", y(quadrants[0].y))
+    .attr("class", "line quadrant")
+;
+
+var lq = svg.append("svg:line")
+    .attr("x1", x(stats.uq))
+    .attr("y1", y(1))
+    .attr("x2", x(stats.uq))
+    .attr("y2", y(quadrants[quadrants.length-1].y))
+    .attr("class", "line quadrant")
+;
+
+var lq = svg.append("svg:line")
+    .attr("x1", x(stats.ld))
+    .attr("y1", y(1))
+    .attr("x2", x(stats.ld))
+    .attr("y2", y(deciles[0].y))
+    .attr("class", "line quadrant")
+;
+
+var lq = svg.append("svg:line")
+    .attr("x1", x(stats.ud))
+    .attr("y1", y(1))
+    .attr("x2", x(stats.ud))
+    .attr("y2", y(deciles[deciles.length-1].y))
+    .attr("class", "line quadrant")
+;
+
+
+
+
+var padding = 0,
+    rangepad = .1,
+    mid = 0,
+    boxwidth = 20,
+    radius = 3,
+    showaxis = false;  // axis or labels
+
+var xscale = x;
+
+    var vert = svg.append("svg:line")
+        .attr("y1", mid)
+        .attr("x1", xscale(stats.max))
+        .attr("y2", mid)
+        .attr("x2", xscale(stats.min))
+        .attr("class", "box line vert_outer")
+    ;
+
+    var vert_inner = svg.append("svg:line")
+        .attr("y1", mid)
+        .attr("x1", xscale(stats.ud))
+        .attr("y2", mid)
+        .attr("x2", xscale(stats.ld))
+        .attr("class", "box line vert_inner")
+    ;
+
+    var whisk_top = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/2)
+        .attr("x1", xscale(stats.max))
+        .attr("y2", mid + boxwidth/2)
+        .attr("x2", xscale(stats.max))
+        .attr("class", "box line whisker")
+    ;
+
+     var whisk_bottom = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/2)
+        .attr("x1", xscale(stats.min))
+        .attr("y2", mid + boxwidth/2)
+        .attr("x2", xscale(stats.min))
+        .attr("class", "box line whisker")
+    ;
+
+    /*
+     var whisk_91 = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/4)
+        .attr("x1", xscale(stats.pct91))
+        .attr("y2", mid)
+        .attr("x2", xscale(stats.pct91))
+        .attr("class", "box lightwhisker")
+    ;
+     var whisk_9 = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/4)
+        .attr("x1", xscale(stats.pct9))
+        .attr("y2", mid)
+        .attr("x2", xscale(stats.pct9))
+        .attr("class", "box lightwhisker")
+    ;*/
+    
+     var whisk_98 = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/4)
+        .attr("x1", xscale(stats.pct98))
+        .attr("y2", mid + boxwidth/4)
+        .attr("x2", xscale(stats.pct98))
+        .attr("class", "box line lightwhisker")
+    ;
+     var whisk_2 = svg.append("svg:line")
+        .attr("y1", mid - boxwidth/4)
+        .attr("x1", xscale(stats.pct2))
+        .attr("y2", mid + boxwidth/4)
+        .attr("x2", xscale(stats.pct2))
+        .attr("class", "box line lightwhisker")
+    ;
+
+ 
+    //# svg:rect x="0" y="0" width="0" height="0" rx="0" ry="0"
+    var rect = svg.append("svg:rect")
+        .attr("y", mid- boxwidth )
+        .attr("x", xscale(stats.lq))
+        .attr("height", boxwidth*2)
+        .attr("width", (xscale(stats.uq) - xscale(stats.lq)))
+        .attr("class", "box rect")
+    ;
+     
+
+    var boxmed = svg.append("svg:line")
+        .attr("y1", mid - boxwidth)
+        .attr("x1", xscale(stats.median))
+        .attr("y2", mid + boxwidth)
+        .attr("x2", xscale(stats.median))
+        .attr("class", "box line median")
+    ;
+    var boxmean = svg.append("svg:circle")
+        .attr("r", radius)
+        .attr("cy", mid)
+        .attr("cx", xscale(stats.mean))
+        .attr("class", "box circle mean")
+    ;
+        
+/*
+    svg.append("svg:text")
+        .attr("y", mid)
+        .attr("x", width + margin.bottom/2)
+        .attr("text-anchor", "middle")
+        .attr("class", "text title")
+        .text(stats.name)
+    ;
+   */ 
+/*
+    //Y axis
+    if (showaxis) {
+        var xAxis = d3.svg.axis()
+                      .scale(xscale)
+                      .orient("top")
+                      .ticks(10);
+        
+        svg.append("g")
+            .attr("class", "axis")
+            .attr("transform", "translate(" + padding + ",0)")
+            .call(xAxis);
+    } else {
+        svg.append("svg:text")
+            .attr("y", mid - boxwidth - 10)
+            .attr("x", xscale(stats.max))
+            .attr("dx", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.max)
+        ;
+         svg.append("svg:text")
+            .attr("y", mid - boxwidth - 10)
+            .attr("x", xscale(stats.min))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.min)
+        ;
+        svg.append("svg:text")
+            .attr("y", mid - boxwidth - 10)
+            .attr("x", xscale(stats.median))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "end")
+            .attr("class", "text")
+            .text(stats.median)
+        ;
+        svg.append("svg:text")
+            .attr("y", mid + boxwidth + 10)
+            .attr("x", xscale(stats.uq))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .attr("class", "text")
+            .text(stats.uq)
+        ;
+        svg.append("svg:text")
+            .attr("y", mid + boxwidth + 10)
+            .attr("x", xscale(stats.lq))
+            .attr("dy", ".35em")
+            .attr("text-anchor", "start")
+            .attr("class", "text")
+            .text(stats.lq)
+        ;
+    }
+ */
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <div class="content"></div>
+
+<script type="text/javascript">
+
+ var stats = {
+        name: "age",
+        min: 17.0,
+        max: 90.0,
+        lq: 31.0,
+        uq: 49.0,
+        ld: 24.0,
+        ud: 58.0,
+        pct2: 19.0,
+        pct9: 23.0,
+        pct91: 59.0,
+        pct98: 69.0,
+        median: 40,
+        mean: 40.45510777,
+        median: 40.0, 
+        stdDeviation: 12.94970451
+    }; 
+        
+var plots = [
+  {
+    "x":17.0,
+    "y": 0.005974119493451676
+  },
+  {
+    "x":18.0,
+    "y": 0.0068505086600116165
+  },
+  {
+    "x":19.0,
+    "y": 0.007808757643037638
+  },
+  {
+    "x":20.0,
+    "y": 0.008848125585132366
+  },
+  {
+    "x":21.0,
+    "y": 0.009966228081241781
+  },
+  {
+    "x":22.0,
+    "y": 0.011158879183382544
+  },
+  {
+    "x":23.0,
+    "y": 0.012419969771370753
+  },
+  {
+    "x":24.0,
+    "y": 0.013741391461256391
+  },
+  {
+    "x":25.0,
+    "y": 0.015113014347088583
+  },
+  {
+    "x":26.0,
+    "y": 0.016522725475786815
+  },
+  {
+    "x":27.0,
+    "y": 0.017956533057518008
+  },
+  {
+    "x":28.0,
+    "y": 0.019398739066609064
+  },
+  {
+    "x":29.0,
+    "y": 0.020832180175580448
+  },
+  {
+    "x":30.0,
+    "y": 0.02223853400332021
+  },
+  {
+    "x":31.0,
+    "y": 0.023598684589815563
+  },
+  {
+    "x":32.0,
+    "y": 0.024893137995157532
+  },
+  {
+    "x":33.0,
+    "y": 0.02610247613022389
+  },
+  {
+    "x":34.0,
+    "y": 0.027207834529826905
+  },
+  {
+    "x":35.0,
+    "y": 0.02819138793285065
+  },
+  {
+    "x":36.0,
+    "y": 0.029036826370739247
+  },
+  {
+    "x":37.0,
+    "y": 0.02972980408421385
+  },
+  {
+    "x":38.0,
+    "y": 0.030258344044402766
+  },
+  {
+    "x":39.0,
+    "y": 0.030613182156663202
+  },
+  {
+    "x":40.0,
+    "y": 0.03078803733073404
+  },
+  {
+    "x":41.0,
+    "y": 0.030779796417587695
+  },
+  {
+    "x":42.0,
+    "y": 0.030588606404888224
+  },
+  {
+    "x":43.0,
+    "y": 0.03021787005611631
+  },
+  {
+    "x":44.0,
+    "y": 0.029674145174134144
+  },
+  {
+    "x":45.0,
+    "y": 0.028966951656060353
+  },
+  {
+    "x":46.0,
+    "y": 0.028108494271255443
+  },
+  {
+    "x":47.0,
+    "y": 0.02711331244075044
+  },
+  {
+    "x":48.0,
+    "y": 0.02599787105427559
+  },
+  {
+    "x":49.0,
+    "y": 0.024780108397330747
+  },
+  {
+    "x":50.0,
+    "y": 0.023478958487879956
+  },
+  {
+    "x":51.0,
+    "y": 0.02211386550227028
+  },
+  {
+    "x":52.0,
+    "y": 0.02070430751533683
+  },
+  {
+    "x":53.0,
+    "y": 0.019269345550559796
+  },
+  {
+    "x":54.0,
+    "y": 0.017827212034607968
+  },
+  {
+    "x":55.0,
+    "y": 0.016394950311966194
+  },
+  {
+    "x":56.0,
+    "y": 0.014988114057871312
+  },
+  {
+    "x":57.0,
+    "y": 0.013620532401342507
+  },
+  {
+    "x":58.0,
+    "y": 0.012304143504742885
+  },
+  {
+    "x":59.0,
+    "y": 0.011048896401647483
+  },
+  {
+    "x":60.0,
+    "y": 0.00986271821082198
+  },
+  {
+    "x":61.0,
+    "y": 0.008751541534165226
+  },
+  {
+    "x":62.0,
+    "y": 0.0077193849925188286
+  },
+  {
+    "x":63.0,
+    "y": 0.006768478503800868
+  },
+  {
+    "x":64.0,
+    "y": 0.0058994240783194
+  },
+  {
+    "x":65.0,
+    "y": 0.005111382581059322
+  },
+  {
+    "x":66.0,
+    "y": 0.004402277048550579
+  },
+  {
+    "x":67.0,
+    "y": 0.003769003686165135
+  },
+  {
+    "x":68.0,
+    "y": 0.003207642533409406
+  },
+  {
+    "x":69.0,
+    "y": 0.0027136608850247077
+  },
+  {
+    "x":70.0,
+    "y": 0.0022821038077035847
+  },
+  {
+    "x":71.0,
+    "y": 0.001907767412860327
+  },
+  {
+    "x":72.0,
+    "y": 0.0015853518601921758
+  },
+  {
+    "x":73.0,
+    "y": 0.0013095923112272534
+  },
+  {
+    "x":74.0,
+    "y": 0.0010753671767017327
+  },
+  {
+    "x":75.0,
+    "y": 8.777839708741277E-4
+  },
+  {
+    "x":76.0,
+    "y": 7.122438784079926E-4
+  },
+  {
+    "x":77.0,
+    "y": 5.744867469942746E-4
+  },
+  {
+    "x":78.0,
+    "y": 4.606186445688606E-4
+  },
+  {
+    "x":79.0,
+    "y": 3.6712437612567344E-4
+  },
+  {
+    "x":80.0,
+    "y": 2.9086746085401363E-4
+  },
+  {
+    "x":81.0,
+    "y": 2.290800491882688E-4
+  },
+  {
+    "x":82.0,
+    "y": 1.793451371023904E-4
+  },
+  {
+    "x":83.0,
+    "y": 1.395732376397918E-4
+  },
+  {
+    "x":84.0,
+    "y": 1.0797542197710073E-4
+  },
+  {
+    "x":85.0,
+    "y": 8.303436655030738E-5
+  },
+  {
+    "x":86.0,
+    "y": 6.347475796127885E-5
+  },
+  {
+    "x":87.0,
+    "y": 4.8234128926961595E-5
+  },
+  {
+    "x":88.0,
+    "y": 3.643493809727716E-5
+  },
+  {
+    "x":89.0,
+    "y": 2.7358472247421216E-5
+  },
+  {
+    "x":90.0,
+    "y": 2.0420946024291213E-5
+  }
+];
+</script>
+
+
+
+
+  
+</body>
+
+
+</html>
+

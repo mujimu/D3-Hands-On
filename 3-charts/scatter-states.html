@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+
+        .rule line {
+            stroke: #eee;
+        }
+
+        line, path {
+            shape-rendering: crispEdges
+        }
+
+        text {
+            font: 10px sans-serif;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+    d3.csv("data/scatter-data.csv", function(data) {
+
+        /* Read CSV file: first row =>  state,murder,forcible_rape,robbery,aggravated_assault,burglary,larceny_theft,motor_vehicle_theft,population,pop100k,state_type  */
+        var maxvalx = 0, minvalx = 1000000,
+                maxvaly = 0, minvaly = 1000000,
+                sampsize = 0;
+        var label_array = new Array(),
+                val_array = new Array();
+
+        sampsize = data.length;
+
+        for (var i=0; i < sampsize; i++) {
+            label_array[i] = data[i].state;
+            val_array[i] = { label: label_array[i], x: parseFloat(data[i].murder), y: parseFloat(data[i].burglary), size: parseFloat(data[i].pop100k), color: data[i].state_type  };
+            maxvalx = Math.max(maxvalx, parseFloat(data[i].murder) );
+            maxvaly = Math.max(maxvaly, parseFloat(data[i].burglary) );
+            minvalx = Math.min(minvalx, parseFloat(data[i].murder) );
+            minvaly = Math.min(minvaly, parseFloat(data[i].burglary) );
+            //document.write('<p>Label: ' + label_array[i] + '</p>');
+        }
+
+        maxvalx = (1 + Math.floor(maxvalx / 10)) * 10;
+        maxvaly = (10 + Math.floor(maxvaly / 10)) * 10;
+        minvalx = (Math.floor(minvalx / 10)) * 10;
+        minvaly = (Math.floor(minvaly / 10)) * 10 - 100;
+        //document.write('<p>Max X: ' + minvalx + '</p>');
+        //document.write('<p>Max Y: ' + minvaly + '</p>');
+
+        var w = 815,
+                h = 500,
+                p = 80,
+                x = d3.scale.linear().domain([ 0, maxvalx]).range([0, w]),
+                y = d3.scale.linear().domain([ minvaly, maxvaly ]).range([h, 0]);
+
+        var vis = d3.select('body')
+                .data([val_array])
+                .append("svg")
+                .attr("width", w + p * 2)
+                .attr("height", h + p * 2)
+                .append("g")
+                .attr("transform", "translate(" + p + "," + p + ")");
+
+
+        var rules = vis.selectAll("g.rule")
+                .data(x.ticks(10))
+                .enter().append("g")
+                .attr("class", "rule");
+
+        // Draw grid lines
+        rules.append("line")
+                .attr("x1", x)
+                .attr("x2", x)
+                .attr("y1", 0)
+                .attr("y2", h - 1);
+
+        rules.append("line")
+                .attr("class", function(d) { return d ? null : "axis"; })
+                .data(y.ticks(10))
+                .attr("y1", y)
+                .attr("y2", y)
+                .attr("x1", 0)
+                .attr("x2", w - 10);
+
+        // Place axis tick labels
+        rules.append("text")
+                .attr("x", x)
+                .attr("y", h + 15)
+                .attr("dy", ".71em")
+                .attr("text-anchor", "middle")
+                .text(x.tickFormat(10))
+                .text(String);
+
+        rules.append("text")
+                .data(y.ticks(12))
+                .attr("y", y)
+                .attr("x", -10)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "end")
+                .text(y.tickFormat(5));
+
+
+        // Draw xy scatterplot
+        vis.selectAll("circle.line")
+                .data(val_array)
+                .enter().append("circle")
+                .attr("class", "line")
+                .attr("fill", function(d) {
+                    if (d.color == 'blue') return 'steelblue';
+                    if (d.color == 'red') return 'firebrick';
+                    if (d.color == 'purple') return 'darkslateblue';
+                    return d.color;
+                } )
+                .attr("cx", function(d) { return x(d.x); })
+                .attr("cy", function(d) { return y(d.y) - 5; })
+                .attr("r", function(d) { return Math.sqrt( 5*d.size / Math.PI); });
+
+        // add bubble labels
+        vis.selectAll("g.rule")
+                .data(val_array)
+                .enter()
+                .append("text")
+                .attr("text-anchor", "middle")
+                .attr("x", function(d) { return x(d.x); })
+                .attr("y", function(d) { return y(d.y) + Math.sqrt( 5*d.size / Math.PI) + 4; })
+                .attr("dy", ".3em")
+                .attr("fill", "black")
+                .attr("clip", "inherit")
+                .text(function(d) { return d.label; });
+
+
+    });
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>

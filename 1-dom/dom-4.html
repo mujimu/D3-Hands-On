@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        ul.chart {
+            font-size: 8px;
+        }
+
+        li.chart-text {
+            font-size: 20px;
+            color: blue;
+            font-weight: 600;
+        }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+    <h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var labels = [
+        {id: "hey", value: 4, color: "steelblue"},
+        {id: "ho", value: 9, color: "deepskyblue"},
+        {id: "let's", value: 2, color: "darkblue"},
+        {id: "go", value: 12, color: "blue"}
+    ];
+
+    var ul = d3.select('body')
+            .append('ul')
+            .attr('class', 'chart')
+    ;
+
+    var li = ul.selectAll('li')
+            .data(labels)
+            .enter()
+            .append('li')
+                .attr('class', 'chart-text')
+                .text(function(d) {
+                        var label = [];
+                        for (var i = 0; i < d.value; i++) {
+                            label.push(d.id);
+                        }
+                        return label.join(' ');
+                })
+                .style('color', function(d) { return d.color; })
+    ;
+
+    console.log('fin');
+
+    /*
+
+        ... use colorbrewer colors
+        colorbrewer.PuRd[labels.length]        // see colorbrewer2.org
+
+        li.style('color', function(d,i) {
+            var sz = labels.length;
+            return colorbrewer.PuRd[sz+1][sz-i];
+        });
+
+        ... helper lambda to access value array
+        var dvals = function(d) {
+            return d.value;
+        }
+
+         ... array math using our lambda
+        d3.max(labels, dvals);
+        d3.min(labels, dvals);
+
+        // or write it out
+        d3.extent(labels, function(d) {       // min and max
+            return d.value;
+        });
+
+     */
+</script>
+</html>

@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+  
+  <style type='text/css'>
+    .content {
+  font: 10px sans-serif;
+}
+.tooltip {
+  font: 10px sans-serif;
+}
+
+.bar text {
+  fill: #fff;
+}
+
+.axis path, .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+.axis.y {
+  fill: none;
+  stroke-width: 0;
+  shape-rendering: crispEdges;
+}
+
+.bar.rect {
+    stroke: #fff;
+    fill: steelblue;
+    stroke-width: 0;
+    shape-rendering: crispEdges;
+}
+.bar.red{
+    fill: lightsteelblue;
+}
+
+.bar.rect:hover {
+    fill: lightsteelblue;
+}
+
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+.title {
+    font: 12px sans-serif;
+    font-weight: bold;
+}
+
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var data = uniques;
+
+console.log(JSON.stringify(data));
+console.log("data items = " + data.length);
+
+var margin = {top: 20, right: 30, bottom: 100, left: 70},
+    width = 400 - margin.left - margin.right,
+    height = 200 - margin.top - margin.bottom;
+
+var elements = data.map(function(d) { return d.value; });
+var x = d3.scale.ordinal()
+    .domain(elements)
+    .rangeRoundBands([0, width], .05)
+;
+/*
+var x = d3.scale.linear()
+    .domain([data[0].value, data.length])
+    .range([0, width])
+;
+*/
+
+var y = d3.scale.linear()
+    .domain([0, d3.max(data, function(d) { return d.count * 1.1; })])
+    .range([height, 0])
+;
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+;
+
+var yAxis = d3.svg.axis()
+    .scale(y)
+    .orient("left")
+    .ticks(2)
+    .tickFormat(d3.format("d"))  // remove comma
+;
+
+var svg = d3.select(".content").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+svg.append("g")
+      .attr("class", "x axis")
+      .attr("transform", "translate(0," + height + ")")
+      .call(xAxis)
+  .selectAll("text")
+    .attr("y", 0)
+    .attr("x", 9)
+    .attr("dy", ".35em")
+    .attr("transform", "rotate(65)")
+    .style("text-anchor", "start");
+;
+
+svg.append("g")
+      .attr("class", "y axis")
+      .call(yAxis)
+/*
+    .append("text")
+     // .attr("transform", "rotate(-90)")
+      .attr("y", 0)
+      .attr("dy", ".71em")
+      .style("text-anchor", "end")
+      .text("Frequency")
+*/
+;
+
+svg.selectAll(".bar")
+      .data(data)
+    .enter().append("rect")
+        .attr("class", function(d) {
+            if (ff(d.value) === stats.median) 
+                return "bar rect red";
+            else
+                return "bar rect";
+        })
+      .attr("x", function(d) { return x(d.value); })
+      .attr("width", x.rangeBand())
+      .attr("y", function(d) { return y(d.count); })
+      .attr("height", function(d) { return height - y(d.count); })
+.on("mouseover", function(d) {
+    d3.select('.tooltip').html(d.value + " = " + d.count + "  occurances");
+       
+})
+.on("mouseout", function(d) {
+    d3.select('.tooltip').html('');
+})
+;
+
+function ff(d) {
+    return parseFloat(d);
+};
+
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <div class="content"></div>
+<p>
+<div class="tooltip" style="float:left"></div>
+
+<script type="text/javascript">
+    
+     var stats = {
+        name: "education"
+    }; 
+      
+     
+var uniques = 
+[
+  {
+    "count":4442,
+    "value":"HS-grad"
+  },
+  {
+    "count":3349,
+    "value":"Some-college"
+  },
+  {
+    "count":3209,
+    "value":"Bachelors"
+  },
+  {
+    "count":1201,
+    "value":"Masters"
+  },
+  {
+    "count":686,
+    "value":"Assoc-voc"
+  },
+  {
+    "count":506,
+    "value":"Assoc-acdm"
+  },
+  {
+    "count":469,
+    "value":"Prof-school"
+  },
+  {
+    "count":420,
+    "value":"11th"
+  },
+  {
+    "count":341,
+    "value":"10th"
+  },
+  {
+    "count":337,
+    "value":"Doctorate"
+  },
+  {
+    "count":234,
+    "value":"7th-8th"
+  },
+  {
+    "count":179,
+    "value":"9th"
+  },
+  {
+    "count":140,
+    "value":"12th"
+  },
+  {
+    "count":99,
+    "value":"5th-6th"
+  },
+  {
+    "count":54,
+    "value":"1st-4th"
+  },
+  {
+    "count":16,
+    "value":"Preschool"
+  }
+];
+    
+</script>
+
+
+
+
+  
+</body>
+
+
+</html>
+

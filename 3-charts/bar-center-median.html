@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        text {
+            font: 10px sans-serif;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+    d3.csv("data/iqr-data.csv", function(data) {
+
+        // csv cols:  label,q1,q2,q3,range
+        var minvalq1 = 1000000,
+                maxvalq3 = 0,
+                sampsize = 0;
+        var label_array = new Array(),
+                val_array_iqr = new Array();
+        var slope = 0, barheight = 10;
+
+        var sampsize = data.length;
+
+        for (var i=0; i < sampsize; i++) {
+            label_array[i] = data[i].label;
+            val_array_iqr[i] = { label: label_array[i], q1: parseFloat(data[i].q1), q2: parseFloat(data[i].q2), q3: parseFloat(data[i].q3), range: parseFloat(data[i].range) };
+            maxvalq3 = Math.max(maxvalq3, parseFloat(data[i].q3) );
+            minvalq1 = Math.min(minvalq1, parseFloat(data[i].q1) );
+            //document.write('<p>' + label_array[i] +  ': ' + parseFloat(data[i].range) + '</p>');
+        }
+
+        //document.write('<p>Min Q1: ' + minvalq1 +  ' , Max Q3: ' + maxvalq3 + '</p>');
+        maxvalq3 = Math.floor(maxvalq3) + 2;
+        minvalq1 = Math.floor(minvalq1) + -1;
+        //document.write('<p>Min Q1: ' + minvalq1 +  ' , Max Q3: ' + maxvalq3 + '</p>');
+
+
+        var w = 1000,
+                h = 500,
+                labelpad = 215,
+                x = d3.scale.linear().domain([minvalq1, maxvalq3]).range([0, w - labelpad]),
+                y = d3.scale.ordinal().domain(d3.range(data.length)).rangeBands([0, h], .2);
+        slope = (w - labelpad) / (maxvalq3 - minvalq1) ;
+
+        var vis = d3.select("body")
+                .append("svg")
+                .attr("width", w + 40)
+                .attr("height", h + 20)
+                .append("g")
+                .attr("transform", "translate(20,0)");
+
+        var rules = vis.selectAll("g.rule")
+                .data(x.ticks(10))
+                .enter().append("g")
+                .attr("class", "rule")
+                .attr("transform", function(d) {
+                    return "translate(" + x(d) + ", 0)";
+                });
+
+        rules.append("rect")
+                .attr("x", labelpad)
+                .attr("y", 0)
+                .attr("width", w - labelpad)
+                .attr("height", h)
+                .attr("fill", "#F2F2F2");   //backgrd
+
+
+        var bars = vis.selectAll("g.bar")
+                .data(val_array_iqr)
+                .enter().append("g")
+                .attr("class", "bar")
+                .attr("transform", function(d, i) {
+                            return "translate(" + labelpad + "," + y(i) + ")";
+                })
+        ;
+
+
+        bars.append("text")
+                .attr("x", 0)
+                .attr("y", y.rangeBand() / 2)
+                .attr("dx", -6)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "end")
+                .text(function(d) {return d.label;
+                //{ return d.range  + ' ; ' + slope  ; });
+                })
+        ;
+
+
+        bars.append("rect")
+                .attr("fill", "steelblue" )
+                .attr("x", function(d) { return x(d.q1); })
+                .attr("y", y.rangeBand() / 2 - barheight)
+                .attr("width", function(d) { return slope * d.range ; } )
+                .attr("height", y.rangeBand());
+
+// draw median
+        bars.append("line")
+                .attr("y1", y.rangeBand() / 2 -  barheight)
+                .attr("y2", y.rangeBand() / 2 + 1.5* barheight)
+                .attr("x1", function(d) { return x(d.q2); })
+                .attr("x2", function(d) { return x(d.q2); })
+                .attr("stroke", "lightblue")
+                .attr("stroke-width", 4)
+                .attr("stroke-opacity", 1);
+
+
+
+        rules.append("line")
+                .attr("y1", h)
+                .attr("y2", h + 6)
+                .attr("x1", labelpad)
+                .attr("x2", labelpad)
+                .attr("stroke", "lightgray");
+
+        rules.append("line")
+                .attr("y1", 0)
+                .attr("y2", h)
+                .attr("x1", labelpad)
+                .attr("x2", labelpad)
+                .attr("stroke", "lightgray");
+        //.attr("stroke-opacity", 1.5);
+
+
+
+        rules.append("text")
+                .attr("y", h + 8)
+                .attr("x", labelpad)
+                .attr("dy", ".71em")
+                .attr("text-anchor", "middle")
+                .text(x.tickFormat(10));
+
+    });
+
+
+
+
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>

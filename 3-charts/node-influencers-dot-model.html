@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <title> - jsFiddle demo by meash</title>
+
+  <script src="http://d3js.org/d3.v3.min.js"></script>
+  <script src="http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.6.0/underscore-min.js"></script>
+
+  
+  <style type='text/css'>
+    path.link {
+    fill: none;
+    stroke: lightsteelblue;
+    stroke-width: 2px;
+    stroke-linecap: round;
+    marker-end: url(#end);
+}
+path.link.influencer {
+    opacity: 0.5;
+    stroke-dasharray: .5,4;
+    stroke: #ddd;
+}
+path.link.essential {
+    opacity: 1; 
+}
+
+path.link.uq {
+    opacity: 1.0;
+    /*stroke-width: 4px;*/
+    stroke: #666;
+}
+path.link.full {
+    opacity: 0.3;
+    stroke-width: 9px;
+    stroke: steelblue;
+    marker-end: none;
+}
+
+ellipse {
+    fill: goldenrod;
+    stroke: #000;
+    stroke-width: 2px;
+}
+ellipse.target {
+    fill: #DE1F1F;
+}
+ellipse.essential {
+    fill: steelblue;
+}
+ellipse.influencer {
+    fill: lightsteelblue;
+}
+ellipse.selected {
+    fill: white;
+    stroke: #000;
+}
+
+text {
+    fill: #000;
+    font: 10px sans-serif;
+    pointer-events: none;
+}
+text.shadow {
+  stroke: #fff;
+  stroke-width: 3px;
+  stroke-opacity: .8;
+}
+
+  </style>
+  
+
+
+<script type='text/javascript'>//<![CDATA[ 
+window.onload=function(){
+var width = 500,
+    height = 400,
+    r = 10,
+    radius_x = 8,
+    radius_y = 8,
+    repulsion = -400,
+    gravity = 0.1,
+    distance = 125, 
+    lalign = false;
+    doarc = false,
+    debug = false;
+
+(function () {
+    "use strict";
+    var nodes = [];
+    var links = [];
+    
+    nodes.push( { name: target.name, type: 'target' } );
+
+    // prep nodes
+    _.each(model.influencers, function(field) {
+        // add every influencer
+        var node = { name: field, type: 'influencer' };
+        nodes.push(node);
+    });
+    _.each(model.essentials, function(field) {
+        // adjust to essential
+        var node = _.find(nodes, function(d) {
+            return d.name === field;
+        });
+        //alert(JSON.stringify(node));
+        if (!node) {
+            node = { name: field, type: 'essential' };
+            nodes.push(node);
+        } else {
+            node.type = 'essential';
+        }
+    });
+    console.log("num nodes: " + JSON.stringify(nodes.length));
+    console.log("nodes: " + _.map(nodes, function(n){ return n.name }));
+    
+    // prep links
+    for (var i = 1; i < nodes.length; i++) {
+        var node = nodes[i];
+        var link = {
+            source: 0,
+            target: i,
+            fixed: true,
+            value: 1,
+            type: node.type 
+        };
+        links.push(link);
+    };
+                      
+    if (debug) {
+        d3.select("div.report")
+            .append("ul")
+            .selectAll("li")
+            .data(nodes)
+            .enter()
+            .append("li")
+            .text(function (d) {
+                return "node: " + JSON.stringify(d);
+        });
+        d3.select("body")
+            .append("ul")
+            .selectAll("li")
+            .data(links)
+            .enter()
+            .append("li")
+            .text(function (d) {
+                return "link: " + JSON.stringify(d);
+        });
+        return;
+    }
+    
+    var force = d3.layout.force()
+        .nodes(nodes)
+        .links(links)
+        .size([width, height])
+        .linkDistance(distance)
+        .charge(repulsion)
+        //.gravity(gravity)
+        .on("tick", tick)
+        .start()
+    ;
+    
+    var svg = d3.select("body").append("svg")
+        .attr("width", width)
+        .attr("height", height)
+    ;
+
+    // paths
+    var path = svg.append("svg:g")
+        .selectAll("path")
+        .data(force.links())
+        .enter()
+        .append("svg:path")
+        .attr("class", function(d) { 
+            return "link " + d.type; 
+        })
+    ;
+    console.log(force.nodes());
+
+    // add nodes
+    var node = svg.selectAll(".node")
+        .data(force.nodes(), function(d) { return d.name; })
+        .enter()
+        .append("g")
+        .attr("class", function(d) {
+            return "node " + (d.level === 0 ? "target" : "");
+        })
+        .attr("cx", function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
+        .attr("cy", function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); })
+        .call(force.drag)
+    ;
+
+    node.append("ellipse")
+        .attr("rx", function(d) { 
+            return radius_x;
+        })
+        .attr("ry", function(d) { 
+            return radius_y;
+        })
+        .attr("class",function(d) {
+            return "ellipse " + d.type;
+        })
+        .on("mouseover", function(){
+            var n = d3.select(this);
+            n.attr("class", "ellipse selected");
+        })
+        .on("mouseout", function(){
+            var n = d3.select(this);
+            n.attr("class", "ellipse " + n.datum().type );
+        })
+    
+    ;
+    
+    // node text
+    var text = node.append("text")
+        .attr("y", +0)
+        .attr("dx", +15)
+        .attr("dy", ".35em")
+        .attr("text-anchor", "start")
+        .text(function (d) { return d.name; })
+    ;
+    
+    // placement
+    function tick(e) {
+        //node.each(gravity_pull(.2 * e.alpha));
+        //node.each(collide(.5));
+        var q = d3.geom.quadtree(node),
+              i = 0,
+              n = node.length;
+        while (++i < n) {
+           q.visit(collide(node[i]));
+        }
+        
+        node.attr("transform", function (d) {
+            if (d.level == 0) {
+                d.x = width / 2;
+                d.y = height / 2;
+            };
+            return "translate(" + d.x + "," + d.y + ")";
+        });
+        
+        path.attr("d", function (d) {
+            var dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = 0;
+            if (doarc) {
+                dr = Math.sqrt(dx * dx + dy * dy) * 2;
+                // arc
+               return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y + " ";
+            } else {
+                // line
+                return "M" + d.source.x + "," + d.source.y + " " + d.target.x + "," + d.target.y + " ";
+            }
+        });
+    }
+    
+    // Move nodes toward inner cluster 
+    function gravity_pull(alpha) {
+      return function(d) {
+        d.y += (d.cy - d.y) * alpha;
+        d.x += (d.cx - d.x) * alpha;
+      };
+    }
+    
+    // Prevent node collision
+    function collide(node) {
+      var r = node.radius + 16,
+          nx1 = node.x - r,
+          nx2 = node.x + r,
+          ny1 = node.y - r,
+          ny2 = node.y + r;
+      return function(quad, x1, y1, x2, y2) {
+        if (quad.point && (quad.point !== node)) {
+          var x = node.x - quad.point.x,
+              y = node.y - quad.point.y,
+              l = Math.sqrt(x * x + y * y),
+              r = node.radius + quad.point.radius;
+          if (l < r) {
+            l = (l - r) / l * .5;
+            node.x -= x *= l;
+            node.y -= y *= l;
+            quad.point.x += x;
+            quad.point.y += y;
+          }
+        }
+        return x1 > nx2
+            || x2 < nx1
+            || y1 > ny2
+            || y2 < ny1;
+      };
+    }
+    
+})();
+
+}//]]>  
+
+</script>
+
+
+</head>
+<body>
+  <div class="report"></div>
+
+<script type="text/javascript">
+   
+    var target = {
+        "name" : "resp"
+    };
+    
+    var model = {
+        "essentials": [
+            "native-country",
+            "workclass"
+        ],
+        "influencers": [
+            "native-country",
+            "workclass",
+            "sex",
+            "marital-status",
+            "relationship",
+            "education",
+            "occupation"
+        ]
+    };
+    
+</script>
+  
+</body>
+
+
+</html>
+

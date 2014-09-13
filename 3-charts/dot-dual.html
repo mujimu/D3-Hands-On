@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+
+        text {
+            font: 10px sans-serif;
+        }
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+    d3.csv("data/markers-annotate-data.csv", function(data) {
+        var samp_size = 0;
+        var val_array = new Array(),
+                label_array = new Array(),
+                lo20_array = new Array(),
+                hi20_array = new Array(),
+                gini_array = new Array();
+
+        /* Read CSV file: first row =>  country,bottom20,top20,gini  */
+        sampsize = data.length;
+
+        for (var i=0; i < sampsize; i++) {
+            label_array[i] = data[i].country;
+            lo20_array[i] =  parseFloat(data[i].bottom20);
+            hi20_array[i] =  parseFloat(data[i].top20);
+            gini_array[i] =  parseFloat(data[i].gini);
+
+            val_array[i] = { label: label_array[i], lo20: lo20_array[i], top20: hi20_array[i], gini: gini_array[i] };
+            //document.write('<p>' + label_array[i] +  ': ' + val_array[i].gini + '</p>');
+            //document.write('<p>' + i + '</p>');
+        }
+
+        var w = 450,
+                h = 500,
+                labelpad = 75,
+                titlepad = 100,
+                leftpad = 40,
+                footnote = 15,
+                p = 10,
+                x = d3.scale.linear().domain([0,70]).range([0, w - labelpad]),
+                y = d3.scale.linear().domain([0,label_array.length]).range([0, h - titlepad - footnote])
+        z = d3.scale.linear().domain([0,label_array.length]).range([0, 70]);
+
+        var colors = ["black", "firebrick", "black", "steelblue"] ;
+
+
+        var vis = d3.select("body")
+                .append("svg")
+                .attr("class", "chart")
+                .attr("width", w + 2*p)
+                .attr("height", h + 2*p);
+
+
+// ---------------------------------------------------------
+// Draw two lines across, for each label
+//   "fake" it with a rectangle
+// ---------------------------------------------------------
+// Add lines
+        var bars = vis.selectAll("svg")
+                .data(val_array)
+                .enter().append("rect")
+                .attr("fill", "white")
+                .attr("stroke", "black")
+                .attr("x", labelpad)
+                .attr("y", function(d,i){ return titlepad + y(i); })
+                .attr("width",  w - labelpad - leftpad)
+                .attr("height", 4);
+
+// ---------------------------------------------------------
+// Add circles/markers
+// ---------------------------------------------------------
+// top 20%
+        var circle = vis.selectAll("circle")
+                .data(val_array)
+                .enter().append("circle")
+                .attr("fill", colors[3])
+                .attr("stroke", colors[2])
+                .attr("stroke-width", 2)
+                .attr("cx", function(d){ return labelpad + x(d.top20) - leftpad; }) //150 + labelpad)
+                .attr("cy", function(d,i){ return titlepad + y(i) + 2; })
+                .attr("r", 6);
+
+// bottom 20%
+        var rules = vis.selectAll("g.rule")
+                .data(lo20_array)
+                .enter().append("g")
+                .attr("class", "rule");
+
+        rules.append("circle")
+                .attr("fill", colors[1])
+                .attr("stroke", colors[0])
+                .attr("stroke-width", 2)
+                .attr("cx", function(d,i){ return  labelpad + x(d); }) //130 + labelpad)
+                .attr("cy", function(d,i){ return titlepad + y(i) + 2; })
+                .attr("r", 6);
+
+
+// ---------------------------------------------------------
+// Category Labels
+// ---------------------------------------------------------
+// country labels
+        rules.append("text")
+                .attr("x", 0)
+                .attr("y", function(d,i){ return 6 + titlepad + y(i); })
+                .text(function(d,i){ return label_array[i]; });
+
+// Gini values
+        rules.append("text")
+                .attr("x", w + p - leftpad)
+                .attr("y", function(d,i){ return 6 + titlepad + y(i); })
+                .text(function(d,i){ return gini_array[i]; });
+
+
+// ---------------------------------------------------------
+// Add CUSTOM Grid + tick labels
+// mimick: http://www.economist.com/node/18587127
+// ---------------------------------------------------------
+        rules.append("line")
+                .attr("x1", function(d,i){ return Math.min(labelpad + i*(w - labelpad - leftpad)/7, w - leftpad); })
+                .attr("y1", titlepad - p/2)
+                .attr("x2", function(d,i){ return Math.min(labelpad + i*(w - labelpad - leftpad)/7, w - leftpad); })
+                .attr("y2", h - footnote - 3*p/2)
+                .attr("stroke-width", 3)
+                .attr("stroke-opacity", .5);
+
+        rules.append("text")
+                .attr("x", function(d,i){ return Math.min(labelpad + i*(w - labelpad - leftpad)/7, w - leftpad) - 5; })
+                .attr("y", h - footnote - p/2)
+                .text(function(d,i){ return Math.min(10*i, 70); });
+
+
+// ---------------------------------------------------------
+// Title, Legend, Label
+// ---------------------------------------------------------
+// Title
+        vis.append("text")
+                .attr("x", 0)
+                .attr("y", 15)
+                .text("INCOME Inequality (percentage share of income held)");
+
+// Legend: bottom 20%
+        vis.append("circle")
+                .attr("fill", colors[1])
+                .attr("stroke", colors[0])
+                .attr("stroke-width", 2)
+                .attr("cx", p)
+                .attr("cy", 15 + 3*p)
+                .attr("r", 6);
+        vis.append("text")
+                .attr("x", 2*p)
+                .attr("y", 10 + 4*p)
+                .text("poorest 20%");
+
+// Legend: top 20%
+        vis.append("circle")
+                .attr("fill", colors[3])
+                .attr("stroke", colors[2])
+                .attr("stroke-width", 2)
+                .attr("cx", 14*p)
+                .attr("cy", 15 + 3*p)
+                .attr("r", 6);
+        vis.append("text")
+                .attr("x", 15*p)
+                .attr("y", 10 + 4*p)
+                .text("richest 20%");
+
+
+// Gini Label
+        vis.append("text")
+                .attr("x", w-leftpad-4*p)
+                .attr("y", 10 + 3*p)
+                .text("Gini Index");
+        vis.append("text")
+                .attr("x", w-leftpad-12*p)
+                .attr("y", 10 + 5*p)
+                .text("(100 = perfect inequality)");
+
+
+
+    });
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>

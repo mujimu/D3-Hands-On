@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        svg {
+            shape-rendering: crispEdges;
+        }
+        #stackedbudget-chart line {
+            stroke: #000;
+        }
+        .rule line {
+            stroke: #eee;
+        }
+
+        table {
+            border-collapse: collapse;
+            border: 2px solid #FFFAFA;
+        }
+        td {
+            padding: 10px;
+        }
+
+        text {
+            font: 10px sans-serif;
+        }
+
+
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+
+
+
+    // Begin Charting
+    d3.csv("data/stackedbar-data.csv", function(data) {
+        /* Read CSV file: first row =>  quarter,rev_ipod,rev_iphone,rev_ipad,units_ipod,units_iphone,units_ipad  */
+        var minvalrev = 0, minvalunits = 0,
+                maxvalrev = 0, maxvalunits = 0,
+                sumunits = 0, sumrev = 0,
+                sampsize = 0;
+        var label_array = new Array(), val_array_rev = new Array(), val_array_units = new Array(),
+                val_array_sum_rev = new Array(),
+                val_array_stackedbar = new Array();
+
+
+        sampsize = data.length;
+
+        for (var i=0; i < sampsize; i++) {
+            label_array[i] = data[i].quarter;
+            val_array_stackedbar[i] = { label: label_array[i], rev_ipod: parseFloat(data[i].rev_ipod), rev_iphone: parseFloat(data[i].rev_iphone), rev_ipad: parseFloat(data[i].rev_ipad),
+                units_ipod: parseFloat(data[i].units_ipod), units_iphone: parseFloat(data[i].units_iphone), units_ipad: parseFloat(data[i].units_ipad) };
+            val_array_rev[i] = { rev_ipod: parseFloat(data[i].rev_ipod), rev_iphone: parseFloat(data[i].rev_iphone), rev_ipad: parseFloat(data[i].rev_ipad) };
+            val_array_units[i] = { units_ipod: parseFloat(data[i].units_ipod), units_iphone: parseFloat(data[i].units_iphone), units_ipad: parseFloat(data[i].units_ipad) };
+            //val_array_sum_rev[i] = parseFloat(data[i].rev_ipod) + parseFloat(data[i].rev_iphone) + parseFloat(data[i].rev_ipad);
+
+            sumunits =  parseFloat(data[i].units_ipod) + parseFloat(data[i].units_iphone) + parseFloat(data[i].units_ipad);
+            sumrev =  parseFloat(data[i].rev_ipod) + parseFloat(data[i].rev_iphone) + parseFloat(data[i].rev_ipad);
+            maxvalunits = Math.max(maxvalunits, sumunits );
+            maxvalrev = Math.max(maxvalrev, sumrev );
+            //document.write('<p>Quarter ' + label_array[i] + '  ;  ' +  sumrev  + '</p>');
+        }
+
+        //document.write('<p>Max Rev ' + maxvalrev +  ' , Max Units ' + maxvalunits + '</p>');
+        maxvalrev = 1000 * (Math.floor(maxvalrev/1000) + 1);
+        maxvalunits = 1000 * (Math.floor(maxvalunits/1000) + 1);
+        //document.write('<p>Max Rev ' + maxvalrev +  ' , Max Units ' + maxvalunits + '</p>');
+
+
+        var w = 800,
+                h = 500,
+                labelpad = 100,
+                p = 10,
+                barwidth = 20,
+                bottom = h - 2*p,
+                colors = ["orange", "maroon", "darkblue"],
+                color_stacked = d3.interpolateRgb("#aad", "#556"),
+                x = d3.scale.linear().domain([0, sampsize+1]).range([0, w - labelpad]),
+                y2 = d3.scale.linear().domain([0, 10]).range([h,0]);
+        y = d3.scale.linear().domain([0, maxvalrev]).range([0, bottom]);
+
+//document.write('<p>Max Rev ' + maxvalrev +  ' , Max Units ' + maxvalunits + '</p>')
+//document.write('<p>Max Rev ' + addCommas('' + maxvalrev) +  ' , Max Units ' + maxvalunits + '</p>')
+
+
+        var vis = d3.select("body")
+                .append("svg")
+                .attr("class", "chart")
+                .attr("width", w + 2*p)
+                .attr("height", h + 2*p);
+
+// Add first data-series
+        var bars = vis.selectAll("rect")
+                .data(val_array_rev)
+                .enter().append("rect")
+                .attr("fill", colors[2] )
+                .attr("x", function(d, i) { return x(i+1); })
+                .attr("y", function(d) { return bottom - y(d.rev_ipod); }    )
+                .attr("width", 20)
+                .attr("height", function(d) { return y(d.rev_ipod); });
+
+
+
+
+        var rules = vis.selectAll("g.rule")
+                .data(val_array_rev)
+                .enter().append("g")
+                .attr("class", "rule");
+
+// Add second data-series
+        rules.append("rect")
+                .attr("fill", colors[0])
+                .attr("x", function(d, i) { return x(i+1); })
+                .attr("y", function(d) { return bottom - y(d.rev_ipod) - y(d.rev_iphone); }    )
+                .attr("width", 20)
+                .attr("height", function(d) { return y(d.rev_iphone); });
+
+// Add third data-series
+        rules.append("rect")
+                .attr("fill", colors[1] )
+                .attr("x", function(d, i) { return x(i+1); })
+                .attr("y", function(d) { return bottom - y(d.rev_ipod) - y(d.rev_iphone) - y(d.rev_ipad); }    )
+                .attr("width", 20)
+                .attr("height", function(d) { return y(d.rev_ipad); });
+
+// Add horiz axis labels
+        rules.append("text")
+                .attr("y", h)
+                .attr("x", function(d, i) { return x(i+1) + p; })
+                .attr("dy", ".35em")
+                .attr("text-anchor", "middle")
+                .text( function(d, i) { if (i % 2 == 0) {return label_array[i];} else {return '';}  }  );
+
+
+// Custom: Vertical-axis grid + labels
+// See default values below
+        rules.append("line")
+            //.attr("class", function(d) { return d ? null : "axis"; })
+                .data(y.ticks(10))
+                .attr("y1", function(d, i) {return (i+1)* bottom/10;})
+                .attr("y2", function(d, i) {return (i+1)* bottom/10;})
+                .attr("x1", 0)
+                .attr("x2", w - labelpad);
+
+        rules.append("text")
+                .data(y.ticks(10))
+                .attr("y",  function(d, i) {return (i)* bottom/10;} )
+                .attr("x",  w  - 50)
+                .attr("dy", ".35em")
+                .attr("text-anchor", "end")
+                .text(function(d, i) { if (10 - i > 0 && i != 0) {return addCommas( '' + (10-i) * maxvalrev/10) ;} else {return '';} });
+        //.text(function(d, i) { if (y.ticks(10)[10 - i] > 0 && i != 0) {return (10-i) * maxvalrev/10 ;} else {return '';} });
+        // {return y.ticks(10)[10 - i] ;} else {return '';} });
+
+
+// ---------------------------------------
+// Add Title, then Legend
+// ---------------------------------------
+        vis.append("text")
+                .attr("x", labelpad / 2)
+                .attr("y", 35    )
+                .text("Revenue in $Millions (Apple Inc. unaudited data summary)");
+
+        vis.append("rect")
+                .attr("fill", colors[2] )
+                .attr("x", labelpad / 2)
+                .attr("y", 140    )
+                .attr("width", 20)
+                .attr("height", 20);
+
+        vis.append("text")
+                .attr("x", 30 + labelpad / 2)
+                .attr("y", 155    )
+                .text("iPod");
+
+        vis.append("rect")
+                .attr("fill", colors[0] )
+                .attr("x", labelpad / 2)
+                .attr("y", 110    )
+                .attr("width", 20)
+                .attr("height", 20);
+
+        vis.append("text")
+                .attr("x", 30 + labelpad / 2)
+                .attr("y", 125    )
+                .text("iPhone");
+
+        vis.append("rect")
+                .attr("fill", colors[1] )
+                .attr("x", labelpad / 2)
+                .attr("y", 80    )
+                .attr("width", 20)
+                .attr("height", 20);
+
+        vis.append("text")
+                .attr("x", 30 + labelpad / 2)
+                .attr("y", 95    )
+                .text("iPad");
+
+
+
+        /* --------------------------------------------------------------------
+         // "Default" labels and Vertical-axis are "inverted":
+         rules.append("line")
+         //.attr("class", function(d) { return d ? null : "axis"; })
+         .data(y.ticks(10))
+         .attr("y1", y)
+         .attr("y2", y)
+         .attr("x1", 0)
+         .attr("x2", w - labelpad);
+
+
+         rules.append("text")
+         .data(y.ticks(10))
+         .attr("y", y)
+         .attr("x",  w  - 50)
+         .attr("dy", ".35em")
+         .attr("text-anchor", "end")
+         .text(y.tickFormat(5));
+         -------------------------------------------------------------------- */
+
+    });
+
+
+    console.log('fin');
+
+    /*
+     */
+
+           function addCommas(nStr)
+            {
+                nStr += '';
+                x = nStr.split('.');
+                x1 = x[0];
+                x2 = x.length > 1 ? '.' + x[1] : '';
+                var rgx = /(\d+)(\d{3})/;
+                while (rgx.test(x1)) {
+                    x1 = x1.replace(rgx, '$1' + ',' + '$2');
+                }
+                return x1 + x2;
+            }
+
+
+
+</script>
+</html>

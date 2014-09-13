@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>D3 Hands On</title>
+    <style>
+        .chart {
+            background: black ;
+            font: 12px Arial;
+            shape-rendering: crispEdges;
+        }
+        .axis path,
+        .axis line {
+            fill: none;
+            stroke: #aaa;
+            shape-rendering: crispEdges;
+        }
+        .chart text {
+            font: 12px Arial;
+            fill: white ;
+        }
+        .chart .axis text {
+            fill: #aaa;
+        }
+    </style>
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+    <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
+</head>
+<body>
+<h1>D3 Sample</h1>
+</body>
+
+<script type="text/javascript">
+    var distances = [2.23, 2.39, 2.59, 2.77, 3.05, 2.73, 2.38];
+
+    var w = 496;
+    var h = 278;
+
+    var color = d3.scale.linear()
+            .domain([d3.min(distances), d3.mean(distances), d3.max(distances)])
+            .range(["red", "lightblue", "lightgreen"]);
+
+    var x = d3.scale.linear()
+            .domain([0, d3.max(distances)])
+            .range([0, w - 28]);
+
+    var xAxis = d3.svg.axis().scale(x).orient('bottom');
+
+    var chart = d3.select("body").append("svg")
+            .attr("class", "chart")
+            .attr("width", w)
+            .attr("height", h+30)
+            .append("g")
+            .attr("transform", "translate(15,15)");
+
+    chart.selectAll("rect")
+            .data(distances)
+            .enter().append("rect")
+            .attr("y", function(d, i) { return i * 38; })
+            .attr("width", x)
+            .style('fill', color)
+            .attr("height", 28);
+
+    chart.selectAll("text")
+            .data(distances)
+            .enter().append("text")
+            .attr("x", 66)
+            .attr("y", function(d, i) { return (i * 38) + 14; })
+            .attr("dy", ".35em") // vertical-align: middle
+            .attr("text-anchor", "end") // text-align: right
+            .text(function(d) { return d + " miles" });
+
+    chart.append('g')
+            .attr("class", "axis")
+            .attr("transform", "translate(0," + (h-10) + ")")
+            .call(xAxis);
+
+    console.log('fin');
+
+    /*
+     */
+
+</script>
+</html>
