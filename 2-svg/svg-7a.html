@@ -8,6 +8,11 @@
             stroke: #ccc;
             stroke-width: 1.5px;
         }
+
+        .area {
+            fill: lightsteelblue;
+            stroke-width: 0;
+        }
     </style>
     <script src="http://d3js.org/d3.v3.min.js"></script>
     <script src="http://d3js.org/colorbrewer.v1.min.js"></script>
@@ -30,15 +35,25 @@
     ];
 
     var line = d3.svg.line()
-                             .x(function(d) { return d.x; })
-                             .y(function(d) { return d.y; })
-                             .interpolate("linear");
+             .x(function(d) { return d.x; })
+             .y(function(d) { return d.y; })
+             .interpolate("linear");
+
+    var area = d3.svg.area()
+            .x(function(d) { return d.x; })
+            .y0(200)
+            .y1(function(d) { return d.y; });
 
     var svg = d3.select("body").append("svg")
             .attr("width", 400)
             .attr("height", 200)
             .append('g')
     ;
+
+    var area = svg.append("path")
+            .datum(data)
+            .attr("class", "area")
+            .attr("d", area);
 
     var path = svg.append("path")
             .attr("d", line(data))

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<html xmlns:xlink="http://www.w3.org/1999/xlink">
+<head>
+    <title>Differential Line Chart</title>
+
+    <!-- REQUIRED by opv-graph.js -->
+    <script src="http://d3js.org/d3.v3.min.js"></script>
+
+    <script src="diff-graph.js" charset="utf-8"></script>
+    <link rel="stylesheet" type="text/css" href="diff-graph.css" />
+
+</head>
+<body>
+<h2>Differential Line Chart</h2>
+
+<div id="chart"></div>
+
+<script type="text/javascript">
+    var data = [];
+
+    data.push({
+        id: 1,
+        max: 4.321,
+        min: 2.297,
+        name: "Entry 1"
+    });
+
+
+    data.push({
+        id: 2,
+        max: 4.662,
+        min: 2.956,
+        name: "Entry 2"
+    });
+
+    data.push({
+        id: 3,
+        max: 5.089,
+        min: 3.253,
+        name: "Entry 3"
+    });
+
+    data.push({
+        id: 4,
+        max: 4.8738,
+        min: 2.5785,
+        name: "Entry 4"
+    });
+
+    var chart_properties = {
+        // only data required - others will default to what is used here
+        width: 1170,
+        height: 600,
+        col_width: 175,
+        tag_slice: 18,
+        header: true,
+        data: data
+    };
+    chart(chart_properties);
+</script>
+</body>
+</html>
