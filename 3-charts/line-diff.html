@@ -108,13 +108,6 @@ data.push({
 });
 
 data.push({
-    id: 150052,
-    max: 4.6798,
-    min: 2.6286,
-    tag: "Element 5"
-});
-
-data.push({
     id: 147231,
     max: 6.1106,
     min: 3.1894,
@@ -123,13 +116,12 @@ data.push({
 
 
 var chart_properties = {
-    // only data required - others will default to what is used here
     width: 1170,
     height: 600,
     col_width: 175,
     tag_slice: 18,
     header: true,
-    data: data.slice(0,3)   // read in via data.js
+    data: data
 };
 chart(chart_properties);
 
@@ -176,7 +168,7 @@ function chart(props) {
     var start_y = 0;
 
     var y = d3.scale.linear()
-                    .domain([Math.ceil(max), Math.floor(min)])    // asc
+                    .domain([Math.ceil(max +.5), Math.floor(min -.5)])    // asc
                     .range([start_y, height])
             ;
 
@@ -318,24 +310,6 @@ function chart(props) {
             })
     ;
 
-    /*
-     // line lower bound
-     columns.append('line')
-     .attr('class', 'chart')
-     .attr('x1', function(d,i) {
-     return cmid - tick_width/2;
-     })
-     .attr('y1', function(d,i) {
-     return y(d.min);
-     })
-     .attr('x2', function(d,i) {
-     return cmid + tick_width/2;
-     })
-     .attr('y2', function(d,i) {
-     return y(d.min);
-     })
-     ;
-     */
     columns.append('circle')
             .attr('class', 'chart')
             .attr('cx', function(d,i) {
@@ -404,6 +378,12 @@ function chart(props) {
             .attr('transform', 'translate(-10,0)')
             .call(yAxis)
     ;
+    g.append("text")
+            .attr('class', 'chart axis')
+            .attr("transform", "translate(0," + start_y + ") rotate(-90)")
+            .attr("dy", "1em")
+            .style("text-anchor", "end")
+            .text("Sample Thickness (mm)");
 
 }
 
