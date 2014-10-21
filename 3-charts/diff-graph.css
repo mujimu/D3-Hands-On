@@ -1,3 +1,7 @@
+path, text, line {
+    shape-rendering: crispEdges;
+}
+
 circle.chart {
     stroke: #3885ae;
     fill:  black;
