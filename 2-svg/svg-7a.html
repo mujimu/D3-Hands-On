@@ -50,7 +50,7 @@
             .append('g')
     ;
 
-    var area = svg.append("path")
+    var filled = svg.append("path")
             .datum(data)
             .attr("class", "area")
             .attr("d", area);
@@ -68,12 +68,17 @@
         ... adjust line generator type
         line.interpolate("step-before");
         path.attr("d", line(data));
+        ... adjust area generator type
+        area.interpolate("step-before");
+        filled.attr("d", area(data));
 
-        line.interpolate("step-after");
-        path.attr("d", line(data));
+        filled.style("fill", "red");
 
-        line.interpolate("basis");
-        path.attr("d", line(data));
+        ... upper fill instead of lower
+        area.y0(0);
+        filled.attr("d", area(data));
+
+
     */
 
 
